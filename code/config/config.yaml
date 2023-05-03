@@ -1,0 +1,44 @@
+seed : 42
+callback : "val_pearson"
+callback_EarlyStopping : "val_loss"
+
+
+output_dir : './results'      
+save_total_limit : 5            
+save_strategy  : 'epoch'
+per_device_train_batch_size : 64 
+per_device_eval_batch_size : 64 
+logging_dir : './logs'
+logging_steps : 100
+evaluation_strategy : 'epoch'
+load_best_model_at_end : True
+
+
+train :
+    model_name : "klue/bert-base"
+    num_train_epochs : 1             
+    learning_rate : 5e-5    
+    warmup_steps : 100
+    weight_decay : 0.01
+    early_stopping_patience : 3
+
+
+experiment :
+    model_name : "klue/bert-base"
+    num_train_epochs : 1             
+    learning_rate : 5e-5    
+    warmup_steps : 100
+    weight_decay : 0.01
+    early_stopping_patience : 3
+
+
+test :
+    model_dir : "./best_model"  
+    output_dir : "./prediction/submission.csv"
+
+
+path : 
+    train_path: "../dataset/train/train.csv"
+    val_path: "../dataset/train/train.csv"
+    test_path: "../dataset/test/test_data.csv"
+    
