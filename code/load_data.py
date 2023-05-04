@@ -1,11 +1,10 @@
 import pickle as pickle
-import os
 import pandas as pd
 import torch
 import numpy as np
 
 from typing import Tuple
-from transformers import AutoTokenizer, models
+from transformers import AutoTokenizer
 from omegaconf.dictconfig import DictConfig
 
 class RE_Dataset(torch.utils.data.Dataset):
