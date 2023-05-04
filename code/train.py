@@ -70,14 +70,11 @@ def train(config: DictConfig):
         config (dict): train에 적용할 config
     """
 
-    # config에서 train config 추출 (experiment에 따라 config 다르게 적용)
-    if config.do_experiment:
-        train_config = config.experiment
-    else:
-        train_config = config.train
+    # 
+    train_config = config.train
 
     # model_name 호출
-    model_name = train_config.model_name
+    model_name = config.model_name
 
     # make dataset for pytorch.
     train_dataset, val_dataset = load_dataset(
@@ -98,15 +95,15 @@ def train(config: DictConfig):
     training_args = TrainingArguments(
         report_to="wandb",
         seed=config.seed,
-        output_dir=config.output_dir,
-        save_total_limit=config.save_total_limit,
-        save_strategy=config.save_strategy,
-        per_device_train_batch_size=config.per_device_train_batch_size,
-        per_device_eval_batch_size=config.per_device_eval_batch_size,
-        logging_dir=config.logging_dir,
-        logging_steps=config.logging_steps,
-        evaluation_strategy=config.evaluation_strategy,
-        load_best_model_at_end=config.load_best_model_at_end,
+        output_dir=train_config.output_dir,
+        save_total_limit=train_config.save_total_limit,
+        save_strategy=train_config.save_strategy,
+        per_device_train_batch_size=config.batch_size,
+        per_device_eval_batch_size=config.batch_size,
+        logging_dir=train_config.logging_dir,
+        logging_steps=train_config.logging_steps,
+        evaluation_strategy=train_config.evaluation_strategy,
+        load_best_model_at_end=train_config.load_best_model_at_end,
         num_train_epochs=train_config.num_train_epochs,
         learning_rate=train_config.learning_rate,
         warmup_steps=train_config.warmup_steps,

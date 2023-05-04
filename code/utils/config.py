@@ -15,7 +15,6 @@ def load_config(args: Namespace) -> DictConfig:
         DictConfig: _description_
     """    
     config = OmegaConf.load(CONFIG.CONFIG_PATH)
-    config.do_test = args.test
-    config.do_experiment = args.experiment
+    config.do_inference = args.inference
     
     return config

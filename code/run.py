@@ -21,14 +21,13 @@ def main(args):
     # config에 my_log 폴더 경로 기록
     # config.folder_dir = folder_name
 
-    if config.do_test:
+    if config.do_inference:
         inference(config)
     else:
         train(config)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-t", "--test", type=bool, default=False)
-    parser.add_argument("-e", "--experiment", type=bool, default=True)
+    parser.add_argument("-i", "--inference", type=bool, default=False)
     args = parser.parse_args()
     main(args)
