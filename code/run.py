@@ -1,8 +1,8 @@
 import os
 import argparse
+import torch
 
 from utils.config import load_config
-from utils.log import make_log_dirs
 from train import train
 from inference import inference
 
@@ -16,13 +16,15 @@ def main(args):
     if not os.path.isdir(CONFIG.LOGDIR_PATH):
         os.mkdir(CONFIG.LOGDIR_NAME)
 
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
     # folder_name = make_log_dirs(CONFIG.LOGDIR_NAME)
 
     # config에 my_log 폴더 경로 기록
     # config.folder_dir = folder_name
 
     if config.do_inference:
-        inference(config)
+        inference(config, device)
     else:
         train(config)
 

@@ -7,9 +7,7 @@ import torch.nn.functional as F
 
 import pickle as pickle
 import numpy as np
-import argparse
 from tqdm import tqdm
-from omegaconf.dictconfig import DictConfig
 from load_data import num_to_label, load_test_dataset
 
 
@@ -41,12 +39,12 @@ def test(model, tokenized_sent, device, config):
     return np.concatenate(output_pred).tolist(), np.concatenate(output_prob, axis=0).tolist()
 
 
-def inference(config: DictConfig):
+def inference(config, device):
     """
       주어진 dataset csv 파일과 같은 형태일 경우 inference 가능한 코드입니다.
     """
     test_config = config.test
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
     # load tokenizer
     Tokenizer_NAME = config.model_name
     tokenizer = AutoTokenizer.from_pretrained(Tokenizer_NAME)

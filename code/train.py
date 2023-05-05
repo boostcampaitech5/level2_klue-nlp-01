@@ -7,7 +7,7 @@ import numpy as np
 
 from omegaconf.dictconfig import DictConfig
 from sklearn.metrics import accuracy_score
-from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments, EarlyStoppingCallback
+from transformers import AutoConfig, AutoModelForSequenceClassification, TrainingArguments, EarlyStoppingCallback
 from load_data import *
 from custom_trainer import CustomTrainer
 
@@ -63,14 +63,7 @@ def compute_metrics(pred):
     }
 
 
-def train(config: DictConfig):
-    """ 훈련
-
-    Args:
-        config (dict): train에 적용할 config
-    """
-
-    # 
+def train(config):
     train_config = config.train
 
     # model_name 호출

@@ -1,11 +1,8 @@
 import pickle as pickle
 import pandas as pd
 import torch
-import numpy as np
 
-from typing import Tuple
 from transformers import AutoTokenizer
-from omegaconf.dictconfig import DictConfig
 
 class RE_Dataset(torch.utils.data.Dataset):
     """ Dataset 구성을 위한 class."""
@@ -24,15 +21,12 @@ class RE_Dataset(torch.utils.data.Dataset):
         return len(self.labels)
 
 
-def load_dataset(model_name: str, path: DictConfig, experiment: bool) -> Tuple[RE_Dataset, RE_Dataset]:
+def load_dataset(model_name, path, experiment):
     """ csv 파일을 pytorch dataset으로 불러옵니다.
 
     Args:
         model_name (str): 모델 이름
         path (str): 데이터셋 경로
-
-    Returns:
-        RE_Dataset: _description_
     """
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -43,11 +37,11 @@ def load_dataset(model_name: str, path: DictConfig, experiment: bool) -> Tuple[R
 
     # 데이터셋의 label을 불러옴
     train_label = label_to_num(train_dataset['label'].values)
-    eal_label = label_to_num(val_dataset['label'].values)
+    val_label = label_to_num(val_dataset['label'].values)
 
     # tokenizing dataset
     tokenized_train = tokenized_dataset(train_dataset, tokenizer)
-    tokenized_eval = tokenized_dataset(val_dataset, tokenizer)
+    tokenized_val = tokenized_dataset(val_dataset, tokenizer)
 
     # make dataset for pytorch.
     train_dataset = RE_Dataset(tokenized_train, train_label)
@@ -56,7 +50,7 @@ def load_dataset(model_name: str, path: DictConfig, experiment: bool) -> Tuple[R
     return train_dataset, val_dataset
 
 
-def label_to_num(label: np.ndarray) -> list:
+def label_to_num(label):
     num_label = []
     with open('dict_label_to_num.pkl', 'rb') as f:
         dict_label_to_num = pickle.load(f)
@@ -66,7 +60,7 @@ def label_to_num(label: np.ndarray) -> list:
     return num_label
 
 
-def preprocessing_dataset(dataset: pd.DataFrame) -> pd.DataFrame:
+def preprocessing_dataset(dataset):
     """ 처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다."""
     subject_entity = []
     object_entity = []
@@ -81,7 +75,7 @@ def preprocessing_dataset(dataset: pd.DataFrame) -> pd.DataFrame:
     return out_dataset
 
 
-def load_data(dataset_dir: str) -> pd.DataFrame:
+def load_data(dataset_dir):
     """ csv 파일을 경로에 맡게 불러 옵니다. """
     pd_dataset = pd.read_csv(dataset_dir)
     dataset = preprocessing_dataset(pd_dataset)
@@ -89,7 +83,7 @@ def load_data(dataset_dir: str) -> pd.DataFrame:
     return dataset
 
 
-def tokenized_dataset(dataset: RE_Dataset, tokenizer):
+def tokenized_dataset(dataset, tokenizer):
     """ tokenizer에 따라 sentence를 tokenizing 합니다."""
     concat_entity = []
     for e01, e02 in zip(dataset['subject_entity'], dataset['object_entity']):
