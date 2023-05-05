@@ -72,7 +72,7 @@ def train(config, device):
 
     # setting model hyperparameter
     model_config = AutoConfig.from_pretrained(model_name)
-    model_config.num_labels = 30
+    model_config.num_labels = CONFIG.NUM_LABELS
 
     model = AutoModelForSequenceClassification.from_pretrained(
         model_name, config=model_config)
@@ -81,7 +81,7 @@ def train(config, device):
     model.to(device)
 
     training_args = TrainingArguments(
-        report_to="wandb",
+        report_to=CONFIG.WANDB,
         seed=config.seed,
         output_dir=train_config.output_dir,
         save_total_limit=train_config.save_total_limit,
