@@ -26,7 +26,7 @@ def main(args):
     if config.do_inference:
         inference(config, device)
     else:
-        train(config)
+        train(config, device)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

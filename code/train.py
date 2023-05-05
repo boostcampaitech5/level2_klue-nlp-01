@@ -63,7 +63,7 @@ def compute_metrics(pred):
     }
 
 
-def train(config):
+def train(config, device):
     train_config = config.train
 
     # model_name 호출
@@ -72,8 +72,6 @@ def train(config):
     # make dataset for pytorch.
     train_dataset, val_dataset = load_dataset(
         model_name, config['path'], config.do_experiment)
-
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     # setting model hyperparameter
     model_config = AutoConfig.from_pretrained(model_name)
