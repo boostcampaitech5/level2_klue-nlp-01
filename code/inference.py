@@ -43,14 +43,14 @@ def inference(config, device):
     """
       주어진 dataset csv 파일과 같은 형태일 경우 inference 가능한 코드입니다.
     """
-    test_config = config.test
+    inference_config = config.inference
     
     # 토크나이저 호출
     tokenizer_NAME = config.model_name
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_NAME)
 
     # 저장된 모델 호출
-    model_dir = test_config.model_dir  # model dir.
+    model_dir = inference_config.model_dir
     model = AutoModelForSequenceClassification.from_pretrained(model_dir)
     model.parameters
     model.to(device)
@@ -73,6 +73,6 @@ def inference(config, device):
         {'id': test_id, 'pred_label': pred_answer, 'probs': output_prob, })
 
     # 최종적으로 완성된 예측한 라벨 csv 파일 형태로 저장.
-    output.to_csv(test_config.output_dir, index=False)
+    output.to_csv(inference_config.output_dir, index=False)
     #### 필수!! ##############################################
     print('---- Finish! ----')
