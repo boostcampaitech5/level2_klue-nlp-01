@@ -5,6 +5,7 @@ import torch
 from transformers import AutoTokenizer
 from constants import CONFIG
 
+
 class RE_Dataset(torch.utils.data.Dataset):
     """ Dataset 구성을 위한 class."""
 
@@ -47,8 +48,19 @@ def load_train_dataset(model_name, path, tokenizer_config):
     return train_dataset, val_dataset
 
 
+def load_test_dataset(dataset_dir, tokenizer, tokenizer_config):
+    """test dataset을 불러온 후, tokenizing 합니다."""
+    test_dataset = load_data(dataset_dir)
+    test_label = list(map(int, test_dataset['label'].values))
+
+    # tokenizing dataset
+    tokenized_test = tokenized_dataset(
+        test_dataset, tokenizer, tokenizer_config)
+    return test_dataset['id'], tokenized_test, test_label
+
+
 def label_to_num(label):
-    """lable을 pickle에 저장된 dict에 따라 int로 변환합니다."""    
+    """lable을 pickle에 저장된 dict에 따라 int로 변환합니다."""
     num_label = []
     with open(CONFIG.DICT_LABEL_TO_NUM, 'rb') as f:
         dict_label_to_num = pickle.load(f)
@@ -102,21 +114,11 @@ def tokenized_dataset(dataset, tokenizer, tokenizer_config):
 
 
 def num_to_label(label):
-  """숫자로 되어 있던 class를 원본 문자열 라벨로 변환 합니다."""
-  origin_label = []
-  with open(CONFIG.DICT_NUM_TO_LABEL, 'rb') as f:
-    dict_num_to_label = pickle.load(f)
-  for v in label:
-    origin_label.append(dict_num_to_label[v])
+    """숫자로 되어 있던 class를 원본 문자열 라벨로 변환 합니다."""
+    origin_label = []
+    with open(CONFIG.DICT_NUM_TO_LABEL, 'rb') as f:
+        dict_num_to_label = pickle.load(f)
+    for v in label:
+        origin_label.append(dict_num_to_label[v])
 
-  return origin_label
-
-
-def load_test_dataset(dataset_dir, tokenizer, tokenizer_config):
-  """test dataset을 불러온 후, tokenizing 합니다."""
-  test_dataset = load_data(dataset_dir)
-  test_label = list(map(int, test_dataset['label'].values))
-  
-  # tokenizing dataset
-  tokenized_test = tokenized_dataset(test_dataset, tokenizer, tokenizer_config)
-  return test_dataset['id'], tokenized_test, test_label
+    return origin_label

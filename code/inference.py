@@ -46,8 +46,8 @@ def inference(config, device):
     inference_config = config.inference
     
     # 토크나이저 호출
-    tokenizer_NAME = config.model_name
-    tokenizer = AutoTokenizer.from_pretrained(tokenizer_NAME)
+    tokenizer_name = config.model_name
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
 
     # 저장된 모델 호출
     model_dir = inference_config.model_dir
@@ -58,7 +58,7 @@ def inference(config, device):
     # test 데이터셋 호출
     test_dataset_dir = config.path.test_path
     test_id, test_dataset, test_label = load_test_dataset(
-        test_dataset_dir, tokenizer)
+        test_dataset_dir, tokenizer, config.tokenizer)
     Re_test_dataset = RE_Dataset(test_dataset, test_label)
 
     # 정답 예측

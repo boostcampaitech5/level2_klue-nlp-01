@@ -68,7 +68,7 @@ def train(config, device):
 
     # make dataset for pytorch.
     train_dataset, val_dataset = load_train_dataset(
-        model_name, config['path'], config.tokenzier)
+        model_name, config['path'], config.tokenizer)
 
     # setting model hyperparameter
     model_config = AutoConfig.from_pretrained(model_name)
