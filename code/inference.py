@@ -44,30 +44,29 @@ def inference(config, device):
       주어진 dataset csv 파일과 같은 형태일 경우 inference 가능한 코드입니다.
     """
     test_config = config.test
+    
+    # 토크나이저 호출
+    tokenizer_NAME = config.model_name
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_NAME)
 
-    # load tokenizer
-    Tokenizer_NAME = config.model_name
-    tokenizer = AutoTokenizer.from_pretrained(Tokenizer_NAME)
-
-    # load my model
-    MODEL_NAME = test_config.model_dir  # model dir.
-    model = AutoModelForSequenceClassification.from_pretrained(
-        test_config.model_dir)
+    # 저장된 모델 호출
+    model_dir = test_config.model_dir  # model dir.
+    model = AutoModelForSequenceClassification.from_pretrained(model_dir)
     model.parameters
     model.to(device)
 
-    # load test datset
+    # test 데이터셋 호출
     test_dataset_dir = config.path.test_path
     test_id, test_dataset, test_label = load_test_dataset(
         test_dataset_dir, tokenizer)
     Re_test_dataset = RE_Dataset(test_dataset, test_label)
 
-    # predict answer
+    # 정답 예측
     pred_answer, output_prob = test(
         model, Re_test_dataset, device, config)  # model에서 class 추론
     pred_answer = num_to_label(pred_answer)  # 숫자로 된 class를 원래 문자열 라벨로 변환.
 
-    # make csv file with predicted answer
+    # 예측된 정답을 DataFrame으로 저장
     #########################################################
     # 아래 directory와 columns의 형태는 지켜주시기 바랍니다.
     output = pd.DataFrame(
