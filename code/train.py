@@ -1,15 +1,12 @@
 import pickle as pickle
-import os
-import pandas as pd
-import torch
 import sklearn
 import numpy as np
 
-from omegaconf.dictconfig import DictConfig
 from sklearn.metrics import accuracy_score
 from transformers import AutoConfig, AutoModelForSequenceClassification, TrainingArguments, EarlyStoppingCallback
 from load_data import *
 from custom_trainer import CustomTrainer
+from constants import CONFIG
 
 
 def klue_re_micro_f1(preds, labels):
@@ -113,4 +110,4 @@ def train(config, device):
 
     # train model
     trainer.train()
-    model.save_pretrained('./best_model')
+    model.save_pretrained(CONFIG.OUTPUT_PATH)
