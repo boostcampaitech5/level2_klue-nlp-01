@@ -3,6 +3,7 @@ import pandas as pd
 import torch
 
 from transformers import AutoTokenizer
+from constants import CONFIG
 
 class RE_Dataset(torch.utils.data.Dataset):
     """ Dataset 구성을 위한 class."""
@@ -53,7 +54,7 @@ def load_train_dataset(model_name, path, tokenizer_config):
 
 def label_to_num(label):
     num_label = []
-    with open('dict_label_to_num.pkl', 'rb') as f:
+    with open(CONFIG.DICT_LABEL_TO_NUM, 'rb') as f:
         dict_label_to_num = pickle.load(f)
     for v in label:
         num_label.append(dict_label_to_num[v])
@@ -109,7 +110,7 @@ def num_to_label(label):
     숫자로 되어 있던 class를 원본 문자열 라벨로 변환 합니다.
   """
   origin_label = []
-  with open('dict_num_to_label.pkl', 'rb') as f:
+  with open(CONFIG.DICT_NUM_TO_LABEL, 'rb') as f:
     dict_num_to_label = pickle.load(f)
   for v in label:
     origin_label.append(dict_num_to_label[v])

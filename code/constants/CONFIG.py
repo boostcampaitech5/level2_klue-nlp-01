@@ -9,3 +9,6 @@ OUTPUT_PATH = "./best_model"
 NUM_LABELS = 30
 
 WADNB = 'wandb'
+
+DICT_NUM_TO_LABEL = 'dict_num_to_label.pkl'
+DICT_LABEL_TO_NUM = 'dict_label_to_num.pkl'
