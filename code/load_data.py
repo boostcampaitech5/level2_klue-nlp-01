@@ -21,7 +21,7 @@ class RE_Dataset(torch.utils.data.Dataset):
         return len(self.labels)
 
 
-def load_dataset(model_name, path, experiment):
+def load_train_dataset(model_name, path, tokenizer_config):
     """ csv 파일을 pytorch dataset으로 불러옵니다.
 
     Args:
@@ -40,8 +40,9 @@ def load_dataset(model_name, path, experiment):
     val_label = label_to_num(val_dataset['label'].values)
 
     # tokenizing dataset
-    tokenized_train = tokenized_dataset(train_dataset, tokenizer)
-    tokenized_val = tokenized_dataset(val_dataset, tokenizer)
+    tokenized_train = tokenized_dataset(
+        train_dataset, tokenizer, tokenizer_config)
+    tokenized_val = tokenized_dataset(val_dataset, tokenizer, tokenizer_config)
 
     # make dataset for pytorch.
     train_dataset = RE_Dataset(tokenized_train, train_label)
@@ -83,7 +84,7 @@ def load_data(dataset_dir):
     return dataset
 
 
-def tokenized_dataset(dataset, tokenizer):
+def tokenized_dataset(dataset, tokenizer, tokenizer_config):
     """ tokenizer에 따라 sentence를 tokenizing 합니다."""
     concat_entity = []
     for e01, e02 in zip(dataset['subject_entity'], dataset['object_entity']):
@@ -93,11 +94,11 @@ def tokenized_dataset(dataset, tokenizer):
     tokenized_sentences = tokenizer(
         concat_entity,
         list(dataset['sentence']),
-        return_tensors="pt",
-        padding=True,
-        truncation=True,
-        max_length=256,
-        add_special_tokens=True,
+        return_tensors=tokenizer_config.return_tensors,
+        padding=tokenizer_config.padding,
+        truncation=tokenizer_config.truncation,
+        max_length=tokenizer_config.max_length,
+        add_special_tokens=tokenizer_config.add_special_tokens
     )
 
     return tokenized_sentences
@@ -116,7 +117,7 @@ def num_to_label(label):
   return origin_label
 
 
-def load_test_dataset(dataset_dir, tokenizer):
+def load_test_dataset(dataset_dir, tokenizer, tokenizer_config):
   """
     test dataset을 불러온 후,
     tokenizing 합니다.
@@ -124,5 +125,5 @@ def load_test_dataset(dataset_dir, tokenizer):
   test_dataset = load_data(dataset_dir)
   test_label = list(map(int, test_dataset['label'].values))
   # tokenizing dataset
-  tokenized_test = tokenized_dataset(test_dataset, tokenizer)
+  tokenized_test = tokenized_dataset(test_dataset, tokenizer, tokenizer_config)
   return test_dataset['id'], tokenized_test, test_label
