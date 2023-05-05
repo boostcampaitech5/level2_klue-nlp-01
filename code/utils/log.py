@@ -6,7 +6,7 @@ import pytz
 
 
 def make_log_dirs(dir_path):
-    # my_log 안에 날짜폴더를 생성, config.json파일을 복사
+    """my_log 안에 날짜폴더를 생성, config.json파일을 복사"""
     kr_tz = pytz.timezone('Asia/Seoul')
     now = datetime.now(tz=kr_tz)
     folder_name = now.strftime('%Y-%m-%d-%H:%M:%S')

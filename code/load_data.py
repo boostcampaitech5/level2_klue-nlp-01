@@ -23,12 +23,7 @@ class RE_Dataset(torch.utils.data.Dataset):
 
 
 def load_train_dataset(model_name, path, tokenizer_config):
-    """ csv 파일을 pytorch dataset으로 불러옵니다.
-
-    Args:
-        model_name (str): 모델 이름
-        path (str): 데이터셋 경로
-    """
+    """ csv 파일을 pytorch dataset으로 불러옵니다."""
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
@@ -53,6 +48,7 @@ def load_train_dataset(model_name, path, tokenizer_config):
 
 
 def label_to_num(label):
+    """lable을 pickle에 저장된 dict에 따라 int로 변환합니다."""    
     num_label = []
     with open(CONFIG.DICT_LABEL_TO_NUM, 'rb') as f:
         dict_label_to_num = pickle.load(f)
@@ -106,9 +102,7 @@ def tokenized_dataset(dataset, tokenizer, tokenizer_config):
 
 
 def num_to_label(label):
-  """
-    숫자로 되어 있던 class를 원본 문자열 라벨로 변환 합니다.
-  """
+  """숫자로 되어 있던 class를 원본 문자열 라벨로 변환 합니다."""
   origin_label = []
   with open(CONFIG.DICT_NUM_TO_LABEL, 'rb') as f:
     dict_num_to_label = pickle.load(f)
@@ -119,12 +113,10 @@ def num_to_label(label):
 
 
 def load_test_dataset(dataset_dir, tokenizer, tokenizer_config):
-  """
-    test dataset을 불러온 후,
-    tokenizing 합니다.
-  """
+  """test dataset을 불러온 후, tokenizing 합니다."""
   test_dataset = load_data(dataset_dir)
   test_label = list(map(int, test_dataset['label'].values))
+  
   # tokenizing dataset
   tokenized_test = tokenized_dataset(test_dataset, tokenizer, tokenizer_config)
   return test_dataset['id'], tokenized_test, test_label
