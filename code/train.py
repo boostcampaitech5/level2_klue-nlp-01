@@ -5,7 +5,8 @@ import numpy as np
 from sklearn.metrics import accuracy_score
 from transformers import AutoConfig, AutoModelForSequenceClassification, TrainingArguments, EarlyStoppingCallback
 from load_data import *
-from custom_trainer import CustomTrainer
+from custom.custom_trainer import CustomTrainer
+from custom.custom_model import CustomModel
 from constants import CONFIG
 
 
@@ -74,10 +75,10 @@ def train(config, device):
     model_config = AutoConfig.from_pretrained(model_name)
     model_config.num_labels = CONFIG.NUM_LABELS
 
-    model = AutoModelForSequenceClassification.from_pretrained(
-        model_name, config=model_config)
+    # model = AutoModelForSequenceClassification.from_pretrained(
+    #     model_name, config=model_config)
 
-    model.parameters
+    model = CustomModel(config=model_config)
     model.to(device)
 
     training_args = TrainingArguments(
