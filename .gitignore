@@ -24,3 +24,4 @@ code/best_model
 *.pth
 *.bin
 *.pyc
+*.out
