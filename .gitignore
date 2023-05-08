@@ -1,0 +1,27 @@
+# directory
+.cache
+.jupyter
+.local
+.nv
+.vscode-server
+.profile
+.viminfo
+.wget-hsts
+.bash_history
+
+code/.ipynb_checkpoints
+code/__pycache__
+code/results
+code/wandb
+code/logs
+code/best_model
+
+*.csv
+*.ckpt
+*.ipynb
+*.pkl
+*.pt
+*.pth
+*.bin
+*.pyc
+*.out

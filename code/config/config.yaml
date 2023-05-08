@@ -1,0 +1,33 @@
+seed: 42
+model_name: "klue/bert-base"
+batch_size: 64
+
+train:
+  output_dir: "./results"
+  save_total_limit: 5
+  save_strategy: "epoch"
+  logging_dir: "./logs"
+  logging_steps: 100
+  evaluation_strategy: "epoch"
+  load_best_model_at_end: True
+  num_train_epochs: 1
+  learning_rate: 5e-5
+  warmup_steps: 100
+  weight_decay: 0.01
+  early_stopping_patience: 3
+
+tokenizer:
+  return_tensors: "pt"
+  padding: True
+  truncation: True
+  max_length: 256
+  add_special_tokens: True
+
+inference:
+  model_dir: "./best_model"
+  output_dir: "./prediction/submission.csv"
+
+path:
+  train_path: "../dataset/train/train.csv"
+  val_path: "../dataset/train/train.csv"
+  test_path: "../dataset/test/test_data.csv"
