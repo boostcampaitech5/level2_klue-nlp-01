@@ -15,6 +15,9 @@ train:
   warmup_steps: 100
   weight_decay: 0.01
   early_stopping_patience: 3
+  loss_type: "focal"
+  alpha: 1.0
+  gamma: 2.0
 
 tokenizer:
   return_tensors: "pt"
