@@ -24,10 +24,8 @@ class RBERT_Dataset(torch.utils.data.Dataset):
         return len(self.labels)
 
 
-def load_train_dataset(model_name, path, tokenizer_config):
+def load_train_dataset(path, tokenizer, tokenizer_config):
     """ csv 파일을 pytorch dataset으로 불러옵니다."""
-    
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     # DataFrame로 데이터셋 읽기
     train_dataset = load_data(path.train_path)
