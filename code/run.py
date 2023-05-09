@@ -27,7 +27,12 @@ def main(args):
     if config.do_inference:
         inference(config, device)
     else:
+        if args.custom:
+            ## wandb 설정
             wandb.init(project="KLUE-RE", name = folder_name)
+            custom_train(config, device)
+        else:
+            base_train(config, device)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
