@@ -29,8 +29,7 @@ def load_train_dataset(model_name, path, tokenizer_config):
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     # DataFrame로 데이터셋 읽기
-    train_dataset = load_data(path.train_path)
-    val_dataset = load_data(path.val_path)
+    train_dataset, val_dataset = load_split_data(path.train_path)
 
     # 데이터셋의 label을 불러옴
     train_label = label_to_num(train_dataset["label"].values)
