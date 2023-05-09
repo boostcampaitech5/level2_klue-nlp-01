@@ -3,10 +3,12 @@ import sklearn
 import numpy as np
 
 from sklearn.metrics import accuracy_score
-from transformers import AutoConfig, TrainingArguments, EarlyStoppingCallback
-from load_data import *
+from transformers import AutoConfig, TrainingArguments, EarlyStoppingCallback, AutoModelForSequenceClassification, AutoTokenizer
+# from load_data import *
+
+# from custom.custom_model import CustomModel
 from custom.custom_trainer import CustomTrainer
-from custom.custom_model import CustomModel
+from custom.custom_dataset import load_train_dataset
 from constants import CONFIG
 
 
