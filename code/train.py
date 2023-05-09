@@ -105,6 +105,9 @@ def train(config, device):
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
         compute_metrics=compute_metrics,
+        loss_type=train_config.loss_type,
+        alpha=train_config.alpha,
+        gamma=train_config.gamma,  
         callbacks=[EarlyStoppingCallback(
             early_stopping_patience=train_config.early_stopping_patience)]
     )
