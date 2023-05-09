@@ -4,8 +4,7 @@ import torch
 import wandb
 
 from utils.config import load_config
-from train import train
-from inference import inference
+from utils.log import make_log_dirs
 
 from constants import CONFIG
 
@@ -22,7 +21,8 @@ def main(args):
     # folder_name = make_log_dirs(CONFIG.LOGDIR_NAME)
 
     # config에 my_log 폴더 경로 기록
-    # config.folder_dir = folder_name
+    folder_name = make_log_dirs(CONFIG.LOGDIR_NAME)
+    config.folder_dir = folder_name
 
     if config.do_inference:
         inference(config, device)
