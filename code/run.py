@@ -1,6 +1,7 @@
 import os
 import argparse
 import torch
+import wandb
 
 from utils.config import load_config
 from train import train
@@ -26,7 +27,7 @@ def main(args):
     if config.do_inference:
         inference(config, device)
     else:
-        train(config, device)
+            wandb.init(project="KLUE-RE", name = folder_name)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
