@@ -63,7 +63,7 @@ def compute_metrics(pred):
     }
 
 
-def train(config, device):
+def base_train(config, device):
     train_config = config.train
 
     # model_name 호출

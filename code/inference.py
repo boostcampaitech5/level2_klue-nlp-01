@@ -39,7 +39,7 @@ def test(model, tokenized_sent, device, config):
     return np.concatenate(output_pred).tolist(), np.concatenate(output_prob, axis=0).tolist()
 
 
-def inference(config, device):
+def base_inference(config, device):
     """
       주어진 dataset csv 파일과 같은 형태일 경우 inference 가능한 코드입니다.
     """
