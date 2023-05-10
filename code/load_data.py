@@ -5,6 +5,7 @@ import torch
 from transformers import AutoTokenizer
 from constants import CONFIG
 from sklearn.model_selection import StratifiedShuffleSplit
+import os
 
 
 class RE_Dataset(torch.utils.data.Dataset):
@@ -119,6 +120,9 @@ def split_data(dataset_dir):
     # split된 인덱스에 따라 추출한 후, 설정 인덱스를 제거하고 기본 인덱스(0,1,2, ... , n)으로 변경
     train_data = pd_dataset.loc[train_indices].reset_index(drop=True)
     val_data = pd_dataset.loc[val_indices].reset_index(drop=True)
+
+    train_data.to_csv(os.path.join(dataset_dir, "split_train.csv"), index=False)
+    val_data.to_csv(os.path.join(dataset_dir, "split_dev.csv"), index=False)
 
     return train_data, val_data
 
