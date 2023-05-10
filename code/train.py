@@ -78,7 +78,7 @@ def train(config, device):
     # model = AutoModelForSequenceClassification.from_pretrained(
     #     model_name, config=model_config)
 
-    model = CustomModel(config=model_config)
+    model = CustomModel(model_config=model_config, model_name=model_name)
     model.to(device)
 
     training_args = TrainingArguments(
