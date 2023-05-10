@@ -3,11 +3,23 @@ import sklearn
 import numpy as np
 
 from sklearn.metrics import accuracy_score
-from transformers import AutoConfig, TrainingArguments, EarlyStoppingCallback
+from transformers import AutoConfig, TrainingArguments, EarlyStoppingCallback, TrainerCallback
 from load_data import *
 from custom.custom_trainer import CustomTrainer
 from custom.custom_model import CustomModel
 from constants import CONFIG
+
+
+class DropoutCallback(TrainerCallback):
+    def __init__(self, model) -> None:
+        super().__init__()
+        self.model = model
+
+    def on_epoch_begin(self, args, state, control, **kwargs):
+        # 원하는 시점에서 Dropout을 변경합니다.
+        if state.epoch == 5:
+            print(f'dropout change to 5')
+            self.model.config.dropout = 5
 
 
 def klue_re_micro_f1(preds, labels):
@@ -75,10 +87,7 @@ def train(config, device):
     model_config = AutoConfig.from_pretrained(model_name)
     model_config.num_labels = CONFIG.NUM_LABELS
 
-    # model = AutoModelForSequenceClassification.from_pretrained(
-    #     model_name, config=model_config)
-
-    model = CustomModel(config=model_config)
+    model = CustomModel(model_config=model_config, config=config)
     model.to(device)
 
     training_args = TrainingArguments(
