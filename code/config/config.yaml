@@ -16,6 +16,11 @@ train:
   weight_decay: 0.01
   early_stopping_patience: 3
 
+loss:
+  loss_type: "focal"
+  alpha: 1.0
+  gamma: 2.0
+
 tokenizer:
   return_tensors: "pt"
   padding: True
@@ -28,6 +33,6 @@ inference:
   output_dir: "./prediction/submission.csv"
 
 path:
-  train_path: "../dataset/train/train.csv"
-  val_path: "../dataset/train/dev.csv"
-  test_path: "../dataset/test/test_data.csv"
+  train_path: "../dataset/train.csv"
+  val_path: "../dataset/dev.csv"
+  test_path: "../dataset/test_data.csv"
