@@ -40,8 +40,8 @@ def my_load_train_dataset(path, tokenizer, tokenizer_config):
     tokenized_val = tokenized_dataset(val_dataset, tokenizer, tokenizer_config)
 
     # make dataset for pytorch.
-    train_dataset = RBERT_Dataset(tokenized_train, train_label)
-    val_dataset = RBERT_Dataset(tokenized_val, val_label)
+    train_dataset = RE_Dataset(tokenized_train, train_label)
+    val_dataset = RE_Dataset(tokenized_val, val_label)
 
     return train_dataset, val_dataset
 
