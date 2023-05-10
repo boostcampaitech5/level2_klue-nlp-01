@@ -7,7 +7,7 @@ from transformers import AutoTokenizer
 from constants import CONFIG
 
 
-class RBERT_Dataset(torch.utils.data.Dataset):
+class RE_Dataset(torch.utils.data.Dataset):
     """ Dataset 구성을 위한 class."""
 
     def __init__(self, pair_dataset, labels):
@@ -24,7 +24,7 @@ class RBERT_Dataset(torch.utils.data.Dataset):
         return len(self.labels)
 
 
-def load_train_dataset(path, tokenizer, tokenizer_config):
+def my_load_train_dataset(path, tokenizer, tokenizer_config):
     """ csv 파일을 pytorch dataset으로 불러옵니다."""
 
     # DataFrame로 데이터셋 읽기
