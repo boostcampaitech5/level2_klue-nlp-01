@@ -47,7 +47,7 @@ class CustomTrainer(Trainer):
         self.loss = FocalLoss(alpha=alpha, gamma=gamma) if loss_type=="focal" else FocalLoss(1.0, 0.0)
 
     def compute_loss(self, model, inputs, return_outputs=False):
-        """ default loss: ce_loss """
+        """ 기존 loss를 커스텀loss로 변경합니다. (None:CE loss) """
         labels = inputs.get("labels")
         outputs = model(**inputs)
         logits = outputs.get("logits")
