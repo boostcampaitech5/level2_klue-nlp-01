@@ -28,6 +28,6 @@ inference:
   output_dir: "./prediction/submission.csv"
 
 path:
-  train_path: "../dataset/train/train.csv"
-  val_path: "../dataset/train/train.csv"
+  train_path: "../dataset/train.csv"
+  val_path: "../dataset/dev.csv"
   test_path: "../dataset/test/test_data.csv"

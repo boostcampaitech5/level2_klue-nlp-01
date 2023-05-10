@@ -8,6 +8,7 @@
 .viminfo
 .wget-hsts
 .bash_history
+.ipynb_checkpoints
 
 code/.ipynb_checkpoints
 code/__pycache__
