@@ -12,7 +12,6 @@ class FocalLoss(nn.Module):
     """ 
     하이퍼파라미터 alpha, gamma 값을 받아 Focal Loss를 반환합니다.
     reduction='mean'이 default이며 배치 loss들의 평균을 계산합니다.
-    reduction='sum'이 있지만 'mean'으로 통일하는게 나아보입니다.
     """
     def __init__(self, alpha=1.0, gamma=2.0, reduction='mean'):
         super(FocalLoss, self).__init__()
@@ -33,8 +32,6 @@ class FocalLoss(nn.Module):
 
         if self.reduction == 'mean':
             return focal_loss.mean()
-        elif self.reduction == 'sum':
-            return focal_loss.sum()
         else:
             return focal_loss
 
