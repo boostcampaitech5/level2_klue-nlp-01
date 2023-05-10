@@ -191,4 +191,4 @@ def custom_train(config, device):
 
     # train model
     trainer.train()
-    model.save_pretrained(CONFIG.OUTPUT_PATH)
+    model.save_pretrained(config.folder_dir + CONFIG.OUTPUT_PATH)
