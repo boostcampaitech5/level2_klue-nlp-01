@@ -158,8 +158,7 @@ def custom_train(config, device):
     model_config = AutoConfig.from_pretrained(model_name)
     model_config.num_labels = CONFIG.NUM_LABELS
 
-
-    # model = CustomModel(config=model_config)
+    # model = CustomModel(model_config=model_config, model_name=model_name)
     model = AutoModelForSequenceClassification.from_pretrained(model_name, config=model_config)
     model.resize_token_embeddings(len(tokenizer))
     model.to(device)
