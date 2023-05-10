@@ -120,10 +120,6 @@ def split_data(dataset_dir):
     train_data = pd_dataset.loc[train_indices].reset_index(drop=True)
     val_data = pd_dataset.loc[val_indices].reset_index(drop=True)
 
-    # 다시 "id" column을 0부터 순서대로 인덱스 값으로 변경처리
-    train_data["id"] = range(len(train_data))
-    val_data["id"] = range(len(val_data))
-
     return train_data, val_data
 
 
