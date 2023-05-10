@@ -58,8 +58,14 @@ def label_to_num(label):
 
 
 def preprocessing_dataset(dataset):
-    """ 처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다."""
-    # PER(사람), ORG(조직), DAT(시간), LOC(장소), POH(기타 표현), NOH(기타 수량 표현)
+    """
+        처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다.
+        
+        dataset의 entity 데이터를 확인해 Type에 따라 special 토큰을 추가합니다.
+        # PER(사람), ORG(조직), DAT(시간), LOC(장소), POH(기타 표현), NOH(기타 수량 표현)
+        
+        ex) 이 돈가스집은 <O:PER>백종원</O:PER> <S:ORG>더본코리아</S:ORG> 대표 ...
+    """
     
     subject_entity = []
     object_entity = []
@@ -73,6 +79,7 @@ def preprocessing_dataset(dataset):
         sbj_word, sbj_start_id, sbj_end_id, sbj_type = sbj_data['word'], sbj_data['start_idx'], sbj_data['end_idx'], sbj_data['type']
         obj_word, obj_start_id, obj_end_id, obj_type = obj_data['word'], obj_data['start_idx'], obj_data['end_idx'], obj_data['type']
         
+        # entity의 위치에 따라 토큰을 추가하는 순서를 다르게 합니다.
         if sbj_start_id < obj_start_id:
             sentence = sentence[:obj_start_id] + f"<O:{obj_type}>" + obj_word + f"</O:{obj_type}>" + sentence[obj_end_id+1:]
             sentence = sentence[:sbj_start_id] + f"<S:{sbj_type}>" + sbj_word + f"</S:{sbj_type}>" + sentence[sbj_end_id+1:]
