@@ -30,7 +30,7 @@ def load_train_dataset(model_name, path, tokenizer_config):
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     # DataFrame로 데이터셋 읽기
-    train_dataset, val_dataset = load_split_data(path.train_path)
+    train_dataset, val_dataset = load_split_data(path)
 
     # 데이터셋의 label을 불러옴
     train_label = label_to_num(train_dataset["label"].values)
@@ -104,12 +104,19 @@ def load_split_data(dataset_dir):
     train_dataset = preprocessing_dataset(train_data)
     val_dataset = preprocessing_dataset(val_data)
 
+    # 전처리 후 split된 데이터를 저장하기
+    if not os.path.exists(dataset_dir.split_data_dir):
+        os.makedirs(dataset_dir.split_data_dir)
+
+    train_dataset.to_csv(dataset_dir.split_preprocess_train_path, index=False)
+    val_dataset.to_csv(dataset_dir.split_preprocess_val_path, index=False)
+
     return train_dataset, val_dataset
 
 
 def split_data(dataset_dir):
     """csv 파일을 불러와서 train과 dev로 split합니다."""
-    pd_dataset = pd.read_csv(dataset_dir)
+    pd_dataset = pd.read_csv(dataset_dir.train_path)
 
     # train과 valid 데이터로 split 하기
     dataset_label = label_to_num(pd_dataset["label"].values)
@@ -121,8 +128,12 @@ def split_data(dataset_dir):
     train_data = pd_dataset.loc[train_indices].reset_index(drop=True)
     val_data = pd_dataset.loc[val_indices].reset_index(drop=True)
 
-    train_data.to_csv(os.path.join(dataset_dir, "split_train.csv"), index=False)
-    val_data.to_csv(os.path.join(dataset_dir, "split_dev.csv"), index=False)
+    # 전처리 전 split된 데이터를 저장하기
+    if not os.path.exists(dataset_dir.split_data_dir):
+        os.makedirs(dataset_dir.split_data_dir)
+
+    train_data.to_csv(dataset_dir.split_nopreprocess_train_path, index=False)
+    val_data.to_csv(dataset_dir.split_nopreprocess_val_path, index=False)
 
     return train_data, val_data
 
