@@ -1,6 +1,7 @@
 import pickle as pickle
 import sklearn
 import numpy as np
+import torch
 
 from sklearn.metrics import accuracy_score
 from transformers import AutoConfig, TrainingArguments, EarlyStoppingCallback, AutoModelForSequenceClassification, AutoTokenizer
@@ -79,17 +80,14 @@ def base_train(config, device):
     model_name = config.model_name
 
     # make dataset for pytorch.
-    train_dataset, val_dataset = load_train_dataset(
-        model_name, config['path'], config.tokenizer)
+    train_dataset, val_dataset = load_train_dataset(model_name, config['path'], config.tokenizer)
 
     # setting model hyperparameter
     model_config = AutoConfig.from_pretrained(model_name)
     model_config.num_labels = CONFIG.NUM_LABELS
 
-    # model = AutoModelForSequenceClassification.from_pretrained(
-    #     model_name, config=model_config)
-
-    model = CustomModel(config=model_config)
+    # model = CustomModel(config=model_config)
+    model = AutoModelForSequenceClassification.from_pretrained(model_name, config=model_config)
     model.to(device)
 
     training_args = TrainingArguments(
@@ -122,7 +120,7 @@ def base_train(config, device):
 
     # train model
     trainer.train()
-    model.save_pretrained(CONFIG.OUTPUT_PATH)
+    model.save_pretrained(config.folder_dir + CONFIG.OUTPUT_PATH)
 
 def custom_train(config, device):
     '''
@@ -151,7 +149,7 @@ def custom_train(config, device):
     )
 
     # make dataset for pytorch.
-    train_dataset, val_dataset = load_train_dataset(config['path'], tokenizer, config.tokenizer)
+    train_dataset, val_dataset = my_load_train_dataset(config['path'], tokenizer, config.tokenizer)
 
     #setting model hyperparameter
     model_config = AutoConfig.from_pretrained(model_name)
