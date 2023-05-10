@@ -27,16 +27,20 @@ def main(args):
     if config.do_inference:
         base_inference(config, device)
     else:
+        wandb.init(project="KLUE-RE", name = folder_name)
         if args.custom:
             ## wandb 설정
-            wandb.init(project="KLUE-RE", name = folder_name)
+            print("run custom mode!!")
             custom_train(config, device)
         else:
+            print("run normal mode!!")
             base_train(config, device)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--inference", type=bool, default=False)
-    parser.add_argument("-c", "--custom", type=bool, default=False)
+    parser.add_argument("-c", "--custom", type=str, default=False)
     args = parser.parse_args()
+    
+    args.custom = True if args.custom == "True" else False
     main(args)
