@@ -64,6 +64,15 @@ def compute_metrics(pred):
 
 
 def base_train(config, device):
+    '''
+        custom을 사용하지 않는 베이스 모델의 Train 함수입니다.
+        
+        args:
+            config : train을 위한 파라미터 정보를 포함합니다.
+            device : 학습을 진행할 device 정보를 가지고 있습니다. (CPU/cuda:0)
+        return:
+            None
+    '''
     train_config = config.train
 
     # model_name 호출
@@ -116,6 +125,15 @@ def base_train(config, device):
     model.save_pretrained(CONFIG.OUTPUT_PATH)
 
 def custom_train(config, device):
+    '''
+        custom_model을 활용해 학습을 진행하기 위한 Train 함수입니다.
+        
+        args:
+            config : train을 위한 파라미터 정보를 포함합니다.
+            device : 학습을 진행할 device 정보를 가지고 있습니다. (CPU/cuda:0)
+        return:
+            None
+    '''
     train_config = config.train
 
     # model_name 및 tokenizer 호출
