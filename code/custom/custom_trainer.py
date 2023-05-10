@@ -33,13 +33,9 @@ class FocalLoss(nn.Module):
         else:
             return focal_loss
 
-# class CustomTrainer(Trainer):
-#     """커스텀 된 트레이너를 만드는 클래스입니다."""
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-
 
 class CustomTrainer(Trainer):
+    """커스텀 된 트레이너를 만드는 클래스입니다."""
     def __init__(self, *args, loss_type=None, alpha=1.0, gamma=2.0, **kwargs):
         super().__init__(*args, **kwargs)
         self.loss_type = loss_type
