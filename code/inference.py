@@ -80,6 +80,11 @@ def base_inference(config, device):
     output = pd.DataFrame(
         {'id': test_id, 'pred_label': pred_answer, 'probs': output_prob, })
 
+    if not os.path.exists(CONFIG.PREDICTTION_PATH):
+        os.makedirs(CONFIG.PREDICTTION_PATH)
+        
+    if not os.path.exists(os.path.join(inference_config.output_dir, inference_dir)):
+        os.makedirs(os.path.join(inference_config.output_dir, inference_dir))
     # 최종적으로 완성된 예측한 라벨 csv 파일 형태로 저장.
     output.to_csv(inference_config.output_dir, index=False)
     #### 필수!! ##############################################
