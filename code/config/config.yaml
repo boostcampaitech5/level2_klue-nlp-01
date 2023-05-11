@@ -30,7 +30,8 @@ tokenizer:
 
 inference:
   model_dir: "./best_model"
-  output_dir: "./prediction/submission.csv"
+  output_dir: "./prediction"
+  output_file: "submission.csv"
 
 path:
   train_path: "../dataset/train.csv"
