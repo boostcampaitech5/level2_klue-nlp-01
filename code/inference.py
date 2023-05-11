@@ -50,16 +50,16 @@ def base_inference(config, device):
     tokenizer_name = config.model_name
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
 
+    # 마지막으로 실행한 모델 파일을 불러올지 여부 확인
     if config.last_file:
-        # 저장된 모델 호출
         last_log = sorted(os.listdir(CONFIG.LOGDIR_PATH))[-1]
         inference_dir = last_log
     else:
         inference_dir = config.inference_file
     
+    # 모델 불러오기
     model_dir = f"./logs/{inference_dir}/best_model"
     model = AutoModelForSequenceClassification.from_pretrained(model_dir)
-    model.parameters
     model.to(device)
 
     # test 데이터셋 호출
@@ -79,9 +79,11 @@ def base_inference(config, device):
     output = pd.DataFrame(
         {'id': test_id, 'pred_label': pred_answer, 'probs': output_prob, })
 
+    # prediction 폴더 존재 확인
     if not os.path.exists(CONFIG.PREDICTTION_PATH):
         os.makedirs(CONFIG.PREDICTTION_PATH)
-        
+    
+    # prediction 저장 폴더 생성
     if not os.path.exists(os.path.join(inference_config.output_dir, inference_dir)):
         os.makedirs(os.path.join(inference_config.output_dir, inference_dir))
         
@@ -111,13 +113,14 @@ def custom_inference(config, device):
         {"additional_special_tokens": list(set(special_token_list))}
     )
 
+    # 마지막으로 실행한 모델 파일을 불러올지 여부 확인
     if config.last_file:
-        # 저장된 모델 호출
         last_log = sorted(os.listdir(CONFIG.LOGDIR_PATH))[-1]
         inference_dir = last_log
     else:
         inference_dir = config.inference_file
     
+    # 모델 불러오기
     model_dir = f"./logs/{inference_dir}/best_model"
     model = AutoModelForSequenceClassification.from_pretrained(model_dir)
     model.resize_token_embeddings(len(tokenizer))
@@ -137,9 +140,11 @@ def custom_inference(config, device):
     # 아래 directory와 columns의 형태는 지켜주시기 바랍니다.
     output = pd.DataFrame({'id': test_id, 'pred_label': pred_answer, 'probs': output_prob, })
 
+    # prediction 폴더 존재 확인
     if not os.path.exists(CONFIG.PREDICTTION_PATH):
         os.makedirs(CONFIG.PREDICTTION_PATH)
-        
+    
+    # prediction 저장 폴더 생성
     if not os.path.exists(os.path.join(inference_config.output_dir, inference_dir)):
         os.makedirs(os.path.join(inference_config.output_dir, inference_dir))
         

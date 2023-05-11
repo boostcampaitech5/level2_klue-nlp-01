@@ -20,7 +20,9 @@ def main(args):
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
+    # inference만 진행하는지 여부 확인
     if config.only_inference:
+        # 커스텀으로 진행할지 여부 확인
         if args.custom:
             print("run custom inference mode!!")
             custom_inference(config, device)
@@ -33,6 +35,8 @@ def main(args):
         config.folder_dir = folder_name
         
         wandb.init(project="KLUE-RE", name = folder_name)
+        
+        # 커스텀으로 진행할지 여부 확인
         if args.custom:
             ## wandb 설정
             print("run custom mode!!")
