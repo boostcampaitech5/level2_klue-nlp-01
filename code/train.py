@@ -75,7 +75,8 @@ def base_train(config, device):
             None
     '''
     train_config = config.train
-
+    loss_config = config.loss
+    
     # model_name 호출
     model_name = config.model_name
 
