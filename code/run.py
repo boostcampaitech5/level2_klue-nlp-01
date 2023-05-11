@@ -20,13 +20,13 @@ def main(args):
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-    # config에 my_log 폴더 경로 기록
-    folder_name = make_log_dirs(CONFIG.LOGDIR_NAME)
-    config.folder_dir = folder_name
-
-    if config.do_inference:
-        base_inference(config, device)
-    else:
+    if config.only_inference:
+        if args.custom:
+            print("run custom inference mode!!")
+            custom_inference(config, device)
+        else:
+            print("run normal inference mode!!")
+            base_inference(config, device)
         if args.custom:
             ## wandb 설정
             wandb.init(project="KLUE-RE", name = folder_name)
