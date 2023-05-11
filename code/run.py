@@ -1,10 +1,12 @@
 import os
 import argparse
 import torch
+import wandb
 
 from utils.config import load_config
-from train import train
-from inference import inference
+from utils.log import make_log_dirs
+from train import base_train, custom_train
+from inference import base_inference
 
 from constants import CONFIG
 
@@ -18,18 +20,23 @@ def main(args):
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-    # folder_name = make_log_dirs(CONFIG.LOGDIR_NAME)
-
     # config에 my_log 폴더 경로 기록
-    # config.folder_dir = folder_name
+    folder_name = make_log_dirs(CONFIG.LOGDIR_NAME)
+    config.folder_dir = folder_name
 
     if config.do_inference:
-        inference(config, device)
+        base_inference(config, device)
     else:
-        train(config, device)
+        if args.custom:
+            ## wandb 설정
+            wandb.init(project="KLUE-RE", name = folder_name)
+            custom_train(config, device)
+        else:
+            base_train(config, device)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--inference", type=bool, default=False)
+    parser.add_argument("-c", "--custom", type=bool, default=False)
     args = parser.parse_args()
     main(args)
