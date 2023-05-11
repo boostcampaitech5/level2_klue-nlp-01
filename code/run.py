@@ -6,7 +6,7 @@ import wandb
 from utils.config import load_config
 from utils.log import make_log_dirs
 from train import base_train, custom_train
-from inference import base_inference
+from inference import base_inference, custom_inference
 
 from constants import CONFIG
 
