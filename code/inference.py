@@ -1,6 +1,8 @@
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from torch.utils.data import DataLoader
 from load_data import *
+
+import os
 import pandas as pd
 import torch
 import torch.nn.functional as F
@@ -8,8 +10,8 @@ import torch.nn.functional as F
 import pickle as pickle
 import numpy as np
 from tqdm import tqdm
-from load_data import num_to_label, load_test_dataset
-
+# from load_data import num_to_label, load_test_dataset
+from custom.custom_dataset import num_to_label, load_test_dataset
 
 def test(model, tokenized_sent, device, config):
     """
