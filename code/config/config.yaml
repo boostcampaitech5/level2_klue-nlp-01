@@ -36,3 +36,8 @@ path:
   train_path: "../dataset/train.csv"
   val_path: "../dataset/dev.csv"
   test_path: "../dataset/test_data.csv"
+  split_data_dir : "../dataset/split_data/"
+  split_nopreprocess_train_path: "../dataset/split_data/split_nopreprocess_train.csv"
+  split_nopreprocess_val_path: "../dataset/split_data/split_nopreprocess_val.csv"
+  split_preprocess_train_path: "../dataset/split_data/split_preprocess_train.csv"
+  split_preprocess_val_path: "../dataset/split_data/split_preprocess_val.csv"
