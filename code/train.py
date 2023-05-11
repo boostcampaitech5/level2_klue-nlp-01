@@ -76,7 +76,7 @@ def base_train(config, device):
     '''
     train_config = config.train
     loss_config = config.loss
-    
+
     # model_name 호출
     model_name = config.model_name
 
@@ -117,7 +117,8 @@ def base_train(config, device):
         compute_metrics=compute_metrics,
         loss_type=loss_config.loss_type,
         alpha=loss_config.alpha,
-        gamma=loss_config.gamma,  
+        gamma=loss_config.gamma,
+        device=device,
         callbacks=[EarlyStoppingCallback(
             early_stopping_patience=train_config.early_stopping_patience)]
     )
@@ -137,6 +138,7 @@ def custom_train(config, device):
             None
     '''
     train_config = config.train
+    loss_config = config.loss
 
     # model_name 및 tokenizer 호출
     model_name = config.model_name
@@ -188,6 +190,7 @@ def custom_train(config, device):
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
         compute_metrics=compute_metrics,
+        device=device,
         callbacks=[EarlyStoppingCallback(
             early_stopping_patience=train_config.early_stopping_patience)]
     )
