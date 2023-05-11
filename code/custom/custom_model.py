@@ -8,13 +8,13 @@ class CustomModel(PreTrainedModel):
 
     def __init__(self, model_name, model_config, tokenizer):
         super().__init__(config=model_config)
-        self.bert = AutoModelForSequenceClassification.from_pretrained(
+        self.model = AutoModelForSequenceClassification.from_pretrained(
             model_name, num_labels=30)
         self.tokenizer = tokenizer
         
-        self.bert.resize_token_embeddings(len(tokenizer))
+        self.model.resize_token_embeddings(len(self.tokenizer))
 
     def forward(self, input_ids, attention_mask, token_type_ids, labels):
-        x = self.bert(input_ids=input_ids, attention_mask=attention_mask,
+        x = self.model(input_ids=input_ids, attention_mask=attention_mask,
                       token_type_ids=token_type_ids, labels=labels)
         return x
