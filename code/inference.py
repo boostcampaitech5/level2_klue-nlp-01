@@ -51,8 +51,14 @@ def base_inference(config, device):
     tokenizer_name = config.model_name
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
 
-    # 저장된 모델 호출
-    model_dir = inference_config.model_dir
+    if config.last_file:
+        # 저장된 모델 호출
+        last_log = sorted(os.listdir(CONFIG.LOGDIR_PATH))[-1]
+        inference_dir = last_log
+    else:
+        inference_dir = config.inference_file
+    
+    model_dir = f"./logs/{inference_dir}/best_model"
     model = AutoModelForSequenceClassification.from_pretrained(model_dir)
     model.parameters
     model.to(device)
