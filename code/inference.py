@@ -85,7 +85,11 @@ def base_inference(config, device):
         
     if not os.path.exists(os.path.join(inference_config.output_dir, inference_dir)):
         os.makedirs(os.path.join(inference_config.output_dir, inference_dir))
+        
     # 최종적으로 완성된 예측한 라벨 csv 파일 형태로 저장.
-    output.to_csv(inference_config.output_dir, index=False)
+    file_path = os.path.join(inference_config.output_dir, inference_dir, inference_config.output_file)
+    output.to_csv(file_path, index=False)
+    #### 필수!! ##############################################
+    print('---- Finish! ----')
     #### 필수!! ##############################################
     print('---- Finish! ----')
