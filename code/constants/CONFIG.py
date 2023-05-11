@@ -5,6 +5,7 @@ LOGDIR_PATH = "./logs"
 LOGDIR_NAME = "logs"
 
 OUTPUT_PATH = "./best_model"
+PREDICTTION_PATH = "./prediction"
 
 NUM_LABELS = 30
 
