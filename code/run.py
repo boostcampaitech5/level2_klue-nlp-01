@@ -27,13 +27,22 @@ def main(args):
         else:
             print("run normal inference mode!!")
             base_inference(config, device)
+    else:
+        # config에 my_log 폴더 경로 기록
+        folder_name = make_log_dirs(CONFIG.LOGDIR_NAME)
+        config.folder_dir = folder_name
+        
+        wandb.init(project="KLUE-RE", name = folder_name)
         if args.custom:
             ## wandb 설정
-            wandb.init(project="KLUE-RE", name = folder_name)
+            print("run custom mode!!")
             custom_train(config, device)
+            custom_inference(config, device)
         else:
+            print("run normal mode!!")
             base_train(config, device)
-
+            base_inference(config, device)
+        
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--inference", type=bool, default=False)
