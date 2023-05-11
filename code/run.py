@@ -45,7 +45,12 @@ def main(args):
         
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--inference", type=bool, default=False)
-    parser.add_argument("-c", "--custom", type=bool, default=False)
+    parser.add_argument("-i", "--inference", type=str, default=False)
+    parser.add_argument("-c", "--custom", type=str, default=False)
+    parser.add_argument("-l", "--last_file", type=str, default=False)
     args = parser.parse_args()
+
+    args.custom = True if args.custom == "True" else False
+    args.last_file = True if args.last_file == "True" else False
+    
     main(args)
