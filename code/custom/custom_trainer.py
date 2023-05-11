@@ -18,13 +18,14 @@ class FocalLoss(nn.Module):
         self.alpha = alpha
         self.gamma = gamma
         self.reduction = reduction
+        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     def forward(self, input, target):
 
         if isinstance(input, np.ndarray):
-            input = torch.tensor(input, dtype=torch.float32).to(device)
+            input = torch.tensor(input, dtype=torch.float32).to(self.device)
         if isinstance(target, np.ndarray):
-            target = torch.tensor(target, dtype=torch.long).to(device)
+            target = torch.tensor(target, dtype=torch.long).to(self.device)
 
         ce_loss = F.cross_entropy(input, target, reduction='none')
         pt = torch.exp(-ce_loss)
