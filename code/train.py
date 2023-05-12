@@ -205,8 +205,7 @@ def custom_train(config, device):
         compute_metrics=compute_metrics,
         callbacks=[EarlyStoppingCallback(
             early_stopping_patience=train_config.early_stopping_patience),
-            DropoutCallback(model, config)],
-        device=device
+            DropoutCallback(model, config)]
     )
 
     # train model
