@@ -17,8 +17,6 @@ class FocalLoss(nn.Module):
         self.reduction = reduction
         self.device = device
 
-        print(self.device)
-
     def forward(self, input, target):
 
         if isinstance(input, np.ndarray):
