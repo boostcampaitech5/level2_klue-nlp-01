@@ -189,7 +189,8 @@ def custom_train(config, device):
         eval_dataset=val_dataset,
         compute_metrics=compute_metrics,
         callbacks=[EarlyStoppingCallback(
-            early_stopping_patience=train_config.early_stopping_patience)]
+            early_stopping_patience=train_config.early_stopping_patience)],
+        device=device
     )
 
     # train model
