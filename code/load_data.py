@@ -2,6 +2,7 @@ import pickle as pickle
 import pandas as pd
 import torch
 
+from collections import Counter
 from transformers import AutoTokenizer
 from constants import CONFIG
 from sklearn.model_selection import StratifiedShuffleSplit
@@ -22,7 +23,14 @@ class RE_Dataset(torch.utils.data.Dataset):
 
     def __len__(self):
         return len(self.labels)
-
+    
+def compute_class_num_list(labels):
+    """class별 비율을 리스트를 반환합니다."""
+    counter = Counter(labels)
+    class_num_list = [counter[i] for i in range(max(counter.keys())+1)]
+    total_count = sum(class_num_list)
+    class_num_list = [count / total_count for count in class_num_list]
+    return class_num_list
 
 def load_train_dataset(model_name, path, config):
     """csv 파일을 pytorch dataset으로 불러옵니다."""
@@ -48,7 +56,8 @@ def load_train_dataset(model_name, path, config):
     train_dataset = RE_Dataset(tokenized_train, train_label)
     val_dataset = RE_Dataset(tokenized_val, val_label)
 
-    return train_dataset, val_dataset
+    class_num_list = compute_class_num_list(train_label)
+    return train_dataset, val_dataset, class_num_list
 
 
 def load_test_dataset(dataset_dir, tokenizer, tokenizer_config):
