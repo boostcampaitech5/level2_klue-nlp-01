@@ -10,11 +10,13 @@ train:
     logging_steps: 100
     evaluation_strategy: "epoch"
     load_best_model_at_end: True
-    num_train_epochs: 5
+    num_train_epochs: 2
     learning_rate: 5e-5
     warmup_steps: 100
     weight_decay: 0.01
     early_stopping_patience: 3
+    metric_for_best_model: 'micro f1 score'
+    greater_is_better: True
 
 loss:
     loss_type: "focal"
@@ -43,4 +45,3 @@ path:
   split_nopreprocess_val_path: "split_data/split_nopreprocess_val.csv"
   split_preprocess_train_path: "split_data/split_preprocess_train.csv"
   split_preprocess_val_path: "split_data/split_preprocess_val.csv"
-  
