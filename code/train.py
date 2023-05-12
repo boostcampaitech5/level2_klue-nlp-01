@@ -81,7 +81,7 @@ def base_train(config, device):
     model_name = config.model_name
 
     # make dataset for pytorch.
-    train_dataset, val_dataset = load_train_dataset(model_name, config['path'], config.tokenizer)
+    train_dataset, val_dataset, cls_num_list = load_train_dataset(model_name, config['path'], config.tokenizer)
 
     # setting model hyperparameter
     model_config = AutoConfig.from_pretrained(model_name)
@@ -116,8 +116,11 @@ def base_train(config, device):
         eval_dataset=val_dataset,
         compute_metrics=compute_metrics,
         loss_type=loss_config.loss_type,
-        alpha=loss_config.alpha,
         gamma=loss_config.gamma,
+        cls_num_list=cls_num_list,
+        max_m=loss_config.max_m,
+        weight=loss_config.weight,
+        s=loss_config.s,
         device=device,
         callbacks=[EarlyStoppingCallback(
             early_stopping_patience=train_config.early_stopping_patience)]
