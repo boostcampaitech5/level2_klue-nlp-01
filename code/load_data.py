@@ -24,13 +24,13 @@ class RE_Dataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.labels)
     
-def compute_cls_num_list(labels):
+def compute_class_num_list(labels):
     """class별 비율을 리스트를 반환합니다."""
     counter = Counter(labels)
-    cls_num_list = [counter[i] for i in range(max(counter.keys())+1)]
-    total_count = sum(cls_num_list)
-    cls_num_list = [count / total_count for count in cls_num_list]
-    return cls_num_list
+    class_num_list = [counter[i] for i in range(max(counter.keys())+1)]
+    total_count = sum(class_num_list)
+    class_num_list = [count / total_count for count in class_num_list]
+    return class_num_list
 
 def load_train_dataset(model_name, path, tokenizer_config):
     """csv 파일을 pytorch dataset으로 불러옵니다."""
@@ -52,8 +52,8 @@ def load_train_dataset(model_name, path, tokenizer_config):
     train_dataset = RE_Dataset(tokenized_train, train_label)
     val_dataset = RE_Dataset(tokenized_val, val_label)
 
-    cls_num_list = compute_cls_num_list(train_label)
-    return train_dataset, val_dataset, cls_num_list
+    class_num_list = compute_class_num_list(train_label)
+    return train_dataset, val_dataset, class_num_list
 
 
 def load_test_dataset(dataset_dir, tokenizer, tokenizer_config):
