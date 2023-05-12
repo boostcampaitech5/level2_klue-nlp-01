@@ -15,7 +15,7 @@ class FocalLoss(nn.Module):
         gamma: easy/ hard 가중치
     """
     def __init__(self, gamma=2.0, device=None):
-        super(FocalLoss, self).__init__()
+        super().__init__()
         self.gamma = gamma
         self.device=device
 
@@ -35,7 +35,7 @@ class FocalLoss(nn.Module):
 class ClassWeights(nn.Module):
     """"Effective Number of Samples(ENS) 에포크 초기일수록 소수 클래스에 집중됩니다"""
     def __init__(self, class_num_list, beta=0.9999, device=None):
-        super(ClassWeights, self).__init__()
+        super().__init__()
         self.class_num_list = class_num_list
         self.beta = beta
         self.weights = (1.0 - self.beta) / (1.0 - np.power(self.beta, class_num_list))
@@ -56,7 +56,7 @@ class LDAMLoss(nn.Module):
         s: 하이퍼 파라미터
     """
     def __init__(self, class_num_list, max_m=0.5, weight=None, s=30, device=None):
-        super(LDAMLoss, self).__init__()
+        super().__init__()
         delta = 1.0 / np.sqrt(np.sqrt(class_num_list))
         delta = delta * (max_m / np.max(delta))
         delta = torch.cuda.FloatTensor(delta)
