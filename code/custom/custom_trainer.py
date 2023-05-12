@@ -34,11 +34,11 @@ class FocalLoss(nn.Module):
 
 class ClassWeights(nn.Module):
     """"Effective Number of Samples(ENS) 에포크 초기일수록 소수 클래스에 집중됩니다"""
-    def __init__(self, cls_num_list, beta=0.9999, device=None):
+    def __init__(self, class_num_list, beta=0.9999, device=None):
         super(ClassWeights, self).__init__()
-        self.cls_num_list = cls_num_list
+        self.class_num_list = class_num_list
         self.beta = beta
-        self.weights = (1.0 - self.beta) / (1.0 - np.power(self.beta, cls_num_list))
+        self.weights = (1.0 - self.beta) / (1.0 - np.power(self.beta, class_num_list))
         self.device=device
 
     def get_weights(self, epoch, num_epochs):
@@ -55,9 +55,9 @@ class LDAMLoss(nn.Module):
         weight: 클래스 별 가중치
         s: 하이퍼 파라미터
     """
-    def __init__(self, cls_num_list, max_m=0.5, weight=None, s=30, device=None):  
+    def __init__(self, class_num_list, max_m=0.5, weight=None, s=30, device=None):
         super(LDAMLoss, self).__init__()
-        delta = 1.0 / np.sqrt(np.sqrt(cls_num_list))
+        delta = 1.0 / np.sqrt(np.sqrt(class_num_list))
         delta = delta * (max_m / np.max(delta))
         delta = torch.cuda.FloatTensor(delta)
         self.delta = delta
@@ -80,16 +80,16 @@ class LDAMLoss(nn.Module):
 
 class CustomTrainer(Trainer):
     """커스텀 된 트레이너를 만드는 클래스입니다."""
-    def __init__(self, *args, loss_type=None, focal_loss_gamma=2.0, cls_num_list=None, max_m=0.5, weight=None, s=30, device=None, **kwargs):
+    def __init__(self, *args, loss_type=None, focal_loss_gamma=2.0, class_num_list=None, max_m=0.5, weight=None, s=30, device=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.loss_type = loss_type
 
         if loss_type=="focal":
             self.loss = FocalLoss(gamma=focal_loss_gamma, device=device)
         elif self.loss_type=="ldam":
-            assert cls_num_list is not None, "cls_num_list가 필요합니다."
-            self.loss = LDAMLoss(cls_num_list, max_m=0.5, weight=None, s=30, device=device)
-            self.class_weights = ClassWeights(cls_num_list, device=device)
+            assert class_num_list is not None, "class_num_list가 필요합니다."
+            self.loss = LDAMLoss(class_num_list, max_m=0.5, weight=None, s=30, device=device)
+            self.class_weights = ClassWeights(class_num_list, device=device)
         else:
             self.loss = FocalLoss(0.0, device=device)
 
