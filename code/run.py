@@ -29,7 +29,7 @@ def main(args):
     else:
         if args.custom:
             ## wandb 설정
-            wandb.init(project="KLUE-RE", name = folder_name)
+            wandb.init(project="KLUE-RE_dropout_reduces_underfitting", name = folder_name)
             custom_train(config, device)
         else:
             base_train(config, device)
