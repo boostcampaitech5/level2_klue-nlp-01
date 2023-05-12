@@ -7,7 +7,7 @@ from sklearn.metrics import accuracy_score
 from transformers import AutoConfig, TrainingArguments, EarlyStoppingCallback, AutoModelForSequenceClassification, AutoTokenizer, TrainerCallback
 from load_data import load_train_dataset
 
-from custom.custom_model import CustomModel
+# from custom.custom_model import CustomModel
 from custom.custom_trainer import CustomTrainer
 from custom.custom_dataset import my_load_train_dataset
 from constants import CONFIG
@@ -20,11 +20,11 @@ class DropoutCallback(TrainerCallback):
         self.config = config
 
     def on_epoch_begin(self, args, state, control, **kwargs):
-        print(f'current dropout is {self.model.config.hidden_dropout_prob}')
+        print(f'current dropout is {self.model.config.late_attention_probs_dropout_prob}')
         # 원하는 시점에서 Dropout을 변경합니다.
         if state.epoch == self.config.train.late_dropout_epoch:
             print(f'dropout change to {self.config.train.late_hidden_dropout_prob}')
-            self.model.config.hidden_dropout_prob = self.config.train.late_hidden_dropout_prob
+            self.model.config.attention_probs_dropout_prob = self.config.train.late_attention_probs_dropout_prob
 
 
 def klue_re_micro_f1(preds, labels):
@@ -175,11 +175,10 @@ def custom_train(config, device):
     model_config = AutoConfig.from_pretrained(model_name)
     model_config.num_labels = CONFIG.NUM_LABELS
 
-    model = CustomModel(model_config=model_config, model_name=model_name, tokenizer=tokenizer)
-    # model = AutoModelForSequenceClassification.from_pretrained(model_name, config=model_config)
+    # model = CustomModel(model_config=model_config, model_name=model_name, tokenizer=tokenizer)
+    model = AutoModelForSequenceClassification.from_pretrained(model_name, config=model_config)
+    model.resize_token_embeddings(len(tokenizer))
     model.to(device)
-
-    print(model.config)
 
     training_args = TrainingArguments(
         report_to=CONFIG.WANDB,
@@ -206,9 +205,7 @@ def custom_train(config, device):
         eval_dataset=val_dataset,
         compute_metrics=compute_metrics,
         device=device,
-        callbacks=[EarlyStoppingCallback(
-            early_stopping_patience=train_config.early_stopping_patience),
-            DropoutCallback(model, config)]
+        callbacks=[DropoutCallback(model, config)]
     )
 
     # train model
