@@ -10,7 +10,7 @@ def load_config(args):
         config.only_inference = True
     else:
         config.only_inference = False
-    config.inference_dir = args.inference
+        
     config.inference_file = args.inference
 
     return config
