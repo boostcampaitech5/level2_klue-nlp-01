@@ -116,7 +116,7 @@ def base_train(config, device):
         eval_dataset=val_dataset,
         compute_metrics=compute_metrics,
         loss_type=loss_config.loss_type,
-        gamma=loss_config.gamma,
+        focal_loss_gamma=loss_config.gamma,
         cls_num_list=cls_num_list,
         max_m=loss_config.max_m,
         weight=loss_config.weight,
