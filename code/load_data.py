@@ -27,6 +27,10 @@ class RE_Dataset(torch.utils.data.Dataset):
 def load_train_dataset(model_name, path, config):
     """csv 파일을 pytorch dataset으로 불러옵니다."""
 
+     # 전처리 전 split된 데이터를 저장하기
+    if not os.path.exists(os.path.join(config.folder_dir, path.split_data_dir)):
+        os.makedirs(os.path.join(config.folder_dir, path.split_data_dir))
+    
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     # DataFrame로 데이터셋 읽기
@@ -104,10 +108,6 @@ def load_split_data(dataset_dir, save_path):
     train_dataset = preprocessing_dataset(train_data)
     val_dataset = preprocessing_dataset(val_data)
 
-    # 전처리 후 split된 데이터를 저장하기
-    if not os.path.exists(os.path.join(save_path, dataset_dir.split_data_dir)):
-        os.makedirs(os.path.join(save_path, dataset_dir.split_data_dir))
-
     train_dataset.to_csv(os.path.join(save_path, dataset_dir.split_preprocess_train_path), index=False)
     val_dataset.to_csv(os.path.join(save_path, dataset_dir.split_preprocess_val_path), index=False)
 
@@ -127,10 +127,6 @@ def split_data(dataset_dir, save_path):
     # split된 인덱스에 따라 추출한 후, 설정 인덱스를 제거하고 기본 인덱스(0,1,2, ... , n)으로 변경
     train_data = pd_dataset.loc[train_indices].reset_index(drop=True)
     val_data = pd_dataset.loc[val_indices].reset_index(drop=True)
-
-    # 전처리 전 split된 데이터를 저장하기
-    if not os.path.exists(os.path.join(save_path, dataset_dir.split_data_dir)):
-        os.makedirs(os.path.join(save_path, dataset_dir.split_data_dir))
 
     train_data.to_csv(os.path.join(save_path, dataset_dir.split_nopreprocess_train_path), index=False)
     val_data.to_csv(os.path.join(save_path, dataset_dir.split_nopreprocess_val_path), index=False)
