@@ -21,7 +21,6 @@ class FocalLoss(nn.Module):
         self.device=device
 
     def forward(self, input, target):
-        device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         if isinstance(input, np.ndarray):
             input = torch.tensor(input, dtype=torch.float32).to(self.device)
         if isinstance(target, np.ndarray):
