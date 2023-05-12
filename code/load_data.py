@@ -24,21 +24,25 @@ class RE_Dataset(torch.utils.data.Dataset):
         return len(self.labels)
 
 
-def load_train_dataset(model_name, path, tokenizer_config):
+def load_train_dataset(model_name, path, config):
     """csv 파일을 pytorch dataset으로 불러옵니다."""
 
+     # 전처리 전 split된 데이터를 저장하기
+    if not os.path.exists(os.path.join(config.folder_dir, path.split_data_dir)):
+        os.makedirs(os.path.join(config.folder_dir, path.split_data_dir))
+    
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     # DataFrame로 데이터셋 읽기
-    train_dataset, val_dataset = load_split_data(path)
+    train_dataset, val_dataset = load_split_data(path, config.folder_dir)
 
     # 데이터셋의 label을 불러옴
     train_label = label_to_num(train_dataset["label"].values)
     val_label = label_to_num(val_dataset["label"].values)
 
     # tokenizing dataset
-    tokenized_train = tokenized_dataset(train_dataset, tokenizer, tokenizer_config)
-    tokenized_val = tokenized_dataset(val_dataset, tokenizer, tokenizer_config)
+    tokenized_train = tokenized_dataset(train_dataset, tokenizer, config.tokenizer)
+    tokenized_val = tokenized_dataset(val_dataset, tokenizer, config.tokenizer)
 
     # make dataset for pytorch.
     train_dataset = RE_Dataset(tokenized_train, train_label)
@@ -98,23 +102,19 @@ def load_data(dataset_dir):
     return dataset
 
 
-def load_split_data(dataset_dir):
+def load_split_data(dataset_dir, save_path):
     """csv 파일을 경로에 맡게 불러 옵니다."""
-    train_data, val_data = split_data(dataset_dir)
+    train_data, val_data = split_data(dataset_dir, save_path)
     train_dataset = preprocessing_dataset(train_data)
     val_dataset = preprocessing_dataset(val_data)
 
-    # 전처리 후 split된 데이터를 저장하기
-    if not os.path.exists(dataset_dir.split_data_dir):
-        os.makedirs(dataset_dir.split_data_dir)
-
-    train_dataset.to_csv(dataset_dir.split_preprocess_train_path, index=False)
-    val_dataset.to_csv(dataset_dir.split_preprocess_val_path, index=False)
+    train_dataset.to_csv(os.path.join(save_path, dataset_dir.split_preprocess_train_path), index=False)
+    val_dataset.to_csv(os.path.join(save_path, dataset_dir.split_preprocess_val_path), index=False)
 
     return train_dataset, val_dataset
 
 
-def split_data(dataset_dir):
+def split_data(dataset_dir, save_path):
     """csv 파일을 불러와서 train과 dev로 split합니다."""
     pd_dataset = pd.read_csv(dataset_dir.train_path)
 
@@ -128,12 +128,8 @@ def split_data(dataset_dir):
     train_data = pd_dataset.loc[train_indices].reset_index(drop=True)
     val_data = pd_dataset.loc[val_indices].reset_index(drop=True)
 
-    # 전처리 전 split된 데이터를 저장하기
-    if not os.path.exists(dataset_dir.split_data_dir):
-        os.makedirs(dataset_dir.split_data_dir)
-
-    train_data.to_csv(dataset_dir.split_nopreprocess_train_path, index=False)
-    val_data.to_csv(dataset_dir.split_nopreprocess_val_path, index=False)
+    train_data.to_csv(os.path.join(save_path, dataset_dir.split_nopreprocess_train_path), index=False)
+    val_data.to_csv(os.path.join(save_path, dataset_dir.split_nopreprocess_val_path), index=False)
 
     return train_data, val_data
 
