@@ -17,7 +17,7 @@ train:
   early_stopping_patience: 3
 
 loss:
-  loss_type: "focal"
+  loss_type: "ldam"
   gamma: 2.0
   max_m: 0.5
   weight: 1.0
