@@ -20,8 +20,6 @@ def main(args):
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-    ## wandb 설정
-    wandb.init(project="KLUE-RE", name = folder_name)
 
     # config에 my_log 폴더 경로 기록
     folder_name = make_log_dirs(CONFIG.LOGDIR_NAME)
@@ -30,6 +28,8 @@ def main(args):
     if config.do_inference:
         base_inference(config, device)
     else:
+        ## wandb 설정
+        wandb.init(project="KLUE-RE", name = folder_name)
         if args.custom:
             custom_train(config, device)
         else:
