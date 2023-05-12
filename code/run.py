@@ -34,7 +34,7 @@ def main(args):
         folder_name = make_log_dirs(CONFIG.LOGDIR_NAME)
         config.folder_dir = folder_name
         
-        wandb.init(project="KLUE-RE", name = folder_name)
+        wandb.init(project="KLUE-RE_dropout_reduces_underfitting", name = folder_name)
         
         # 커스텀으로 진행할지 여부 확인
         if args.custom:
