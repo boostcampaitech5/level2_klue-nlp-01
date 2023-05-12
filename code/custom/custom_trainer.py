@@ -10,6 +10,7 @@ from utils.config import load_config
 
 class FocalLoss(nn.Module):
     """ 
+    gamma 하이퍼파라미터를 받아 focal loss를 리턴시킵니다.
     https://discuss.pytorch.org/t/is-this-a-correct-implementation-for-focal-loss-in-pytorch/43327/16
     parameter:
         gamma: easy/ hard 가중치
@@ -48,6 +49,7 @@ class ClassWeights(nn.Module):
 
 class LDAMLoss(nn.Module):
     """
+    아래 명시된 parameter들을 받아 LDAM Loss를 반환합니다.
     https://github.com/kaidic/LDAM-DRW/blob/master/losses.py
     parameter:
         cls_num_list: 클래스 별 비율(빈도)
