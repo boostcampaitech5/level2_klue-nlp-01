@@ -190,6 +190,9 @@ def custom_train(config, device):
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
         compute_metrics=compute_metrics,
+        loss_type=loss_config.loss_type,
+        alpha=loss_config.alpha,
+        gamma=loss_config.gamma,
         device=device,
         callbacks=[EarlyStoppingCallback(
             early_stopping_patience=train_config.early_stopping_patience)]
