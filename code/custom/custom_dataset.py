@@ -2,6 +2,7 @@ import pickle as pickle
 import pandas as pd
 import torch
 from tqdm import tqdm
+import numpy as np
 
 from transformers import AutoTokenizer
 from constants import CONFIG
@@ -10,18 +11,94 @@ from constants import CONFIG
 class RE_Dataset(torch.utils.data.Dataset):
     """ Dataset 구성을 위한 class."""
 
-    def __init__(self, pair_dataset, labels):
+    def __init__(self, dataset, pair_dataset, labels, tokenizer):
+        self.dataset = dataset
         self.pair_dataset = pair_dataset
+        self.subject_entity = dataset["subject_entity_token"]
+        self.object_entity = dataset["object_entity_token"]
         self.labels = labels
+        self.tokenizer = tokenizer
 
     def __getitem__(self, idx):
+        subject_entity = self.subject_entity[idx]
+        object_entity = self.object_entity[idx]
+        
+        subject_entity_mask, object_entity_mask = self.add_entity_mask(
+            self.pair_dataset, subject_entity, object_entity
+        )
+        
         item = {key: val[idx].clone().detach()
                 for key, val in self.pair_dataset.items()}
         item['labels'] = torch.tensor(self.labels[idx])
+        item['subject_mask'] = subject_entity_mask
+        item['object_mask'] = object_entity_mask
         return item
 
     def __len__(self):
         return len(self.labels)
+
+    def add_entity_mask(self, encoded_dict, subject_entity, object_entity):
+        """
+        based on special token's coordinate, 
+        make attention mask for subject and object entities' location 
+
+        Variables:
+        - sentence: 그는 [SUB-ORGANIZATION]아메리칸 리그[/SUB-ORGANIZATION]가 출범한 [OBJ-DATE]1901년[/OBJ-DATE] 당시 .426의 타율을 기록하였다.
+        - encoded_dict: ['[CLS]', "'", '[SUB-ORGANIZATION]', '아메리칸', '리그', '[/SUB-ORGANIZATION]', "'", '[SEP]', "'", '[OBJ-DATE]', '190', '##1', '##년', '[/OBJ-DATE]', "'", '[SEP]', '그', '##는', '[SUB-ORGANIZATION]', '아메리칸', '리그', '[/SUB-ORGANIZATION]', '가', '출범', '##한', '[OBJ-DATE]', '190', '##1', '##년', '[/OBJ-DATE]', '당시', '.', '42', '##6', '##의', '타율', '##을', '기록', '##하', '##였', '##다', '.', '[SEP]', ]
+        - subject_entity: ['[SUB-ORGANIZATION]', '아메리칸', '리그', '[/SUB-ORGANIZATION]']
+        - subject_coordinates: index of the first [SUB-{}] added_special_tokens = [2, 18]
+        - subject_entity_mask: [0 0 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ...]
+        - object_entity: ['[OBJ-DATE]', '190', '##1', '##년', '[/OBJ-DATE]']
+        - object_coordinates: index of the first [OBJ-{}] added_special_tokens = [9, 25]
+        - object_entity_mask: [0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 0 0 0 0 0  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ...]
+
+        Based on special tokens([SUB-ORGANIZATION], [OBJ-DATE]) for each entities, 1 in attention mask annotates the location of the entity.
+        For more description, please refer to https://snoop2head.github.io/Relation-Extraction-Code/
+        """
+
+        # initialize entity masks
+        subject_entity_mask = np.zeros(256, dtype=int)
+        object_entity_mask = np.zeros(256, dtype=int)
+
+        # get token_id from encoding subject_entity and object_entity
+        subject_entity_token_ids = self.tokenizer.encode(
+            subject_entity, add_special_tokens=False
+        )
+        object_entity_token_ids = self.tokenizer.encode(
+            object_entity, add_special_tokens=False
+        )
+
+        # get the length of subject_entity and object_entity
+        subject_entity_length = len(subject_entity_token_ids)
+        object_entity_length = len(object_entity_token_ids)
+
+        # find coordinates of subject_entity_token_ids based on special tokens
+        subject_coordinates = np.where(
+            encoded_dict["input_ids"] == subject_entity_token_ids[1]
+        )
+
+        # change the subject_coordinates into int type
+        subject_coordinates = list(map(int, subject_coordinates[0]))
+
+        # notate the location as 1 in subject_entity_mask
+        for subject_index in subject_coordinates:
+            subject_entity_mask[
+                subject_index : subject_index + subject_entity_length
+            ] = 1
+
+        # find coordinates of subject_entity_token_ids based on special tokens
+        object_coordinates = np.where(
+            encoded_dict["input_ids"] == object_entity_token_ids[1]
+        )
+
+        # change the object_coordinates into int type
+        object_coordinates = list(map(int, object_coordinates[0]))
+
+        # notate the location as 1 in object_entity_mask
+        for object_index in object_coordinates:
+            object_entity_mask[object_index : object_index + object_entity_length] = 1
+
+        return torch.Tensor(subject_entity_mask), torch.Tensor(object_entity_mask)
 
 
 def my_load_train_dataset(path, tokenizer, tokenizer_config):
@@ -40,8 +117,8 @@ def my_load_train_dataset(path, tokenizer, tokenizer_config):
     tokenized_val = tokenized_dataset(val_dataset, tokenizer, tokenizer_config)
 
     # make dataset for pytorch.
-    train_dataset = RE_Dataset(tokenized_train, train_label)
-    val_dataset = RE_Dataset(tokenized_val, val_label)
+    train_dataset = RE_Dataset(train_dataset, tokenized_train, train_label, tokenizer)
+    val_dataset = RE_Dataset(val_dataset, tokenized_val, val_label, tokenizer)
 
     return train_dataset, val_dataset
 
@@ -69,6 +146,8 @@ def preprocessing_dataset(dataset):
     
     subject_entity = []
     object_entity = []
+    subject_entity_token = []
+    object_entity_token = []
     sentences = []
     data_length = len(dataset)
     
@@ -89,10 +168,14 @@ def preprocessing_dataset(dataset):
 
         subject_entity.append(sbj_word)
         object_entity.append(obj_word)
+        subject_entity_token.append(f"<S:{sbj_type}>" + sbj_word + f"</S:{sbj_type}>")
+        object_entity_token.append(f"<O:{obj_type}>" + obj_word + f"</O:{obj_type}>")
         sentences.append(sentence)
         
     out_dataset = pd.DataFrame({'id': dataset['id'], 'sentence': sentences,
-                               'subject_entity': subject_entity, 'object_entity': object_entity, 'label': dataset['label'], })
+                               'subject_entity': subject_entity, 'object_entity': object_entity,
+                               'subject_entity_token': subject_entity_token, 'object_entity_token': object_entity_token,
+                               'label': dataset['label'], })
     
     return out_dataset
 
@@ -109,9 +192,9 @@ def tokenized_dataset(dataset, tokenizer, tokenizer_config):
     """ tokenizer에 따라 sentence를 tokenizing 합니다."""
     concat_entity = []
     for e01, e02 in zip(dataset['subject_entity'], dataset['object_entity']):
-        temp = ''
         temp = e01 + '[SEP]' + e02
         concat_entity.append(temp)
+        
     tokenized_sentences = tokenizer(
         concat_entity,
         list(dataset['sentence']),
