@@ -59,6 +59,5 @@ class CustomTrainer(Trainer):
         }
         
         outputs = model(**inputs)
-        logits = outputs.get("logits")
-        loss = self.loss(logits, labels)
+        loss = self.loss(outputs, labels)
         return (loss, outputs) if return_outputs else loss
