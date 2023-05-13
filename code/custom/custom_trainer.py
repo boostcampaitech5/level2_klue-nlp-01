@@ -41,12 +41,23 @@ class CustomTrainer(Trainer):
     """커스텀 된 트레이너를 만드는 클래스입니다."""
     def __init__(self, *args, loss_type=None, alpha=1.0, gamma=2.0, device, **kwargs):
         super().__init__(*args, **kwargs)
+        self.device = device
         self.loss_type = loss_type
         self.loss = FocalLoss(alpha=alpha, gamma=gamma, device=device) if loss_type=="focal" else FocalLoss(1.0, 0.0, device=device)
 
     def compute_loss(self, model, inputs, return_outputs=False):
         """ 기존 loss를 커스텀loss로 변경합니다. (None:CE loss) """
         labels = inputs.get("labels")
+        
+        inputs = {
+            "input_ids": inputs["input_ids"].to(self.device),
+            "attention_mask": inputs["attention_mask"].to(self.device),
+            "subject_mask": inputs["subject_mask"].to(self.device),
+            # 'token_type_ids' # NOT FOR ROBERTA!
+            "object_mask": inputs["object_mask"].to(self.device),
+            "label": labels,
+        }
+        
         outputs = model(**inputs)
         logits = outputs.get("logits")
         loss = self.loss(logits, labels)
