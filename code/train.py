@@ -7,9 +7,9 @@ import os
 
 from sklearn.metrics import accuracy_score
 from transformers import AutoConfig, TrainingArguments, EarlyStoppingCallback, AutoModelForSequenceClassification, AutoTokenizer
-from load_data import load_train_dataset
+# from load_data import load_train_dataset
 
-# from custom.custom_model import CustomModel
+from custom.custom_model import CustomModel, RBERT
 from custom.custom_trainer import CustomTrainer
 from custom.custom_dataset import my_load_train_dataset
 from constants import CONFIG
@@ -31,6 +31,7 @@ def klue_re_micro_f1(preds, labels):
     no_relation_label_idx = label_list.index("no_relation")
     label_indices = list(range(len(label_list)))
     label_indices.remove(no_relation_label_idx)
+    
     return sklearn.metrics.f1_score(labels, preds, average="micro", labels=label_indices) * 100.0
 
 
@@ -159,13 +160,14 @@ def custom_train(config, device):
     # make dataset for pytorch.
     train_dataset, val_dataset = my_load_train_dataset(config['path'], tokenizer, config.tokenizer)
 
-    #setting model hyperparameter
-    model_config = AutoConfig.from_pretrained(model_name)
-    model_config.num_labels = CONFIG.NUM_LABELS
+    model = RBERT(model_name = config.model_name, tokenizer = tokenizer)
+    # setting model hyperparameter
+    # model_config = AutoConfig.from_pretrained(model_name)
+    # model_config.num_labels = CONFIG.NUM_LABELS
 
     # model = CustomModel(model_config=model_config, model_name=model_name)
-    model = AutoModelForSequenceClassification.from_pretrained(model_name, config=model_config)
-    model.resize_token_embeddings(len(tokenizer))
+    # model = AutoModelForSequenceClassification.from_pretrained(model_name, config=model_config)
+    # model.resize_token_embeddings(len(tokenizer))
     model.to(device)
 
     training_args = TrainingArguments(
