@@ -100,14 +100,17 @@ def base_train(config, device):
     # setting model hyperparameter
     model_config = AutoConfig.from_pretrained(model_name)
     model_config.num_labels = CONFIG.NUM_LABELS
+    model_config.hidden_dropout_prob = 0.3
 
     # model = CustomModel(config=model_config)
     model = AutoModelForSequenceClassification.from_pretrained(model_name, config=model_config)
     model.to(device)
+    model.init_weights()
 
     training_args = TrainingArguments(
         report_to=CONFIG.WANDB,
         seed=config.seed,
+        data_seed=42,
         output_dir=train_config.output_dir,
         save_total_limit=train_config.save_total_limit,
         save_strategy=train_config.save_strategy,
@@ -134,7 +137,10 @@ def base_train(config, device):
         gamma=loss_config.gamma,
         device=device,
         callbacks=[EarlyStoppingCallback(
-            early_stopping_patience=train_config.early_stopping_patience)]
+            early_stopping_patience=train_config.early_stopping_patience)
+            ,DropoutCallback(model, config)
+            ]
+
     )
 
     # train model
