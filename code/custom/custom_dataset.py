@@ -24,7 +24,7 @@ class RE_Dataset(torch.utils.data.Dataset):
         return len(self.labels)
 
 
-def my_load_train_dataset(path, tokenizer, tokenizer_config):
+def my_load_train_dataset(path, tokenizer, config):
     """ csv 파일을 pytorch dataset으로 불러옵니다."""
 
     # DataFrame로 데이터셋 읽기
@@ -36,8 +36,8 @@ def my_load_train_dataset(path, tokenizer, tokenizer_config):
     val_label = label_to_num(val_dataset['label'].values)
 
     # tokenizing dataset
-    tokenized_train = tokenized_dataset(train_dataset, tokenizer, tokenizer_config)
-    tokenized_val = tokenized_dataset(val_dataset, tokenizer, tokenizer_config)
+    tokenized_train = tokenized_dataset(train_dataset, tokenizer, config.tokenizer)
+    tokenized_val = tokenized_dataset(val_dataset, tokenizer, config.tokenizer)
 
     # make dataset for pytorch.
     train_dataset = RE_Dataset(tokenized_train, train_label)

@@ -107,7 +107,7 @@ def base_train(config, device):
     model_name = config.model_name
 
     # make dataset for pytorch.
-    train_dataset, val_dataset, class_num_list = load_train_dataset(model_name, config['path'], config.tokenizer)
+    train_dataset, val_dataset, class_num_list = load_train_dataset(model_name, config['path'], config)
 
     # setting model hyperparameter
     model_config = AutoConfig.from_pretrained(model_name)
@@ -186,7 +186,7 @@ def custom_train(config, device):
     tokenizer.add_special_tokens({"additional_special_tokens": list(set(special_token_list))})
 
     # make dataset for pytorch.
-    train_dataset, val_dataset = my_load_train_dataset(config["path"], tokenizer, config.tokenizer)
+    train_dataset, val_dataset = my_load_train_dataset(config["path"], tokenizer, config)
 
     # setting model hyperparameter
     model_config = AutoConfig.from_pretrained(model_name)
