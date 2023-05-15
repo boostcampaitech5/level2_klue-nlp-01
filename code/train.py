@@ -107,7 +107,9 @@ def base_train(config, device):
     model_name = config.model_name
 
     # make dataset for pytorch.
-    train_dataset, val_dataset, class_num_list = load_train_dataset(model_name, config['path'], config)
+    train_dataset, val_dataset, class_num_list = load_train_dataset(
+        model_name, config["path"], config
+    )
 
     # setting model hyperparameter
     model_config = AutoConfig.from_pretrained(model_name)
@@ -135,6 +137,7 @@ def base_train(config, device):
         weight_decay=train_config.weight_decay,
         metric_for_best_model=train_config.metric_for_best_model,
         greater_is_better=train_config.greater_is_better,
+        fp16=True,
     )
 
     trainer = CustomTrainer(
