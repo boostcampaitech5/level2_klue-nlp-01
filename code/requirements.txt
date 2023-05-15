@@ -3,3 +3,4 @@ scikit-learn~=0.24.1
 transformers==4.23.1
 omegaconf==2.3.0
 wandb==0.15.1 --use-feature=2020-resolver
+black==23.3.0

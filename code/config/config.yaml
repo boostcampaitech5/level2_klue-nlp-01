@@ -10,19 +10,25 @@ train:
   logging_steps: 100
   evaluation_strategy: "epoch"
   load_best_model_at_end: True
-  num_train_epochs: 10
+  num_train_epochs: 2
   learning_rate: 5e-5
   warmup_steps: 100
   weight_decay: 0.01
-  early_stopping_patience: 5
+  early_stopping_patience: 3
+  metric_for_best_model: 'micro f1 score'
+  greater_is_better: True
   late_dropout_epoch: 5
   late_hidden_dropout_prob: 0.1
   late_attention_probs_dropout_prob: 0.1
+  metric_for_best_model: 'micro f1 score'
+  greater_is_better: True
 
 loss:
-  loss_type: "focal"
-  alpha: 1.0
+  loss_type: "ldam"
   gamma: 2.0
+  max_m: 0.5
+  weight: 1.0
+  s: 35
 
 tokenizer:
   return_tensors: "pt"
@@ -35,13 +41,14 @@ inference:
   model_dir: "./best_model"
   output_dir: "./prediction"
   output_file: "submission.csv"
+  val_inference_file : "val_inference.csv"
 
 path:
   train_path: "../dataset/train.csv"
   val_path: "../dataset/dev.csv"
   test_path: "../dataset/test_data.csv"
-  split_data_dir: "../dataset/split_data/"
-  split_nopreprocess_train_path: "../dataset/split_data/split_nopreprocess_train.csv"
-  split_nopreprocess_val_path: "../dataset/split_data/split_nopreprocess_val.csv"
-  split_preprocess_train_path: "../dataset/split_data/split_preprocess_train.csv"
-  split_preprocess_val_path: "../dataset/split_data/split_preprocess_val.csv"
+  split_data_dir: "split_data"
+  split_nopreprocess_train_path: "split_data/split_nopreprocess_train.csv"
+  split_nopreprocess_val_path: "split_data/split_nopreprocess_val.csv"
+  split_preprocess_train_path: "split_data/split_preprocess_train.csv"
+  split_preprocess_val_path: "split_data/split_preprocess_val.csv"
