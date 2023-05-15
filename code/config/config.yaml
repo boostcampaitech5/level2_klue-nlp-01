@@ -1,5 +1,5 @@
 seed: 42
-model_name: "klue/bert-base"
+model_name: "klue/roberta-small"
 batch_size: 64
 
 train:
@@ -15,7 +15,7 @@ train:
   warmup_steps: 100
   weight_decay: 0.01
   early_stopping_patience: 3
-  metric_for_best_model: 'micro f1 score'
+  metric_for_best_model: "micro f1 score"
   greater_is_better: True
 
 loss:
@@ -36,7 +36,7 @@ inference:
   model_dir: "./best_model"
   output_dir: "./prediction"
   output_file: "submission.csv"
-  val_inference_file : "val_inference.csv"
+  val_inference_file: "val_inference.csv"
 
 path:
   train_path: "../dataset/train.csv"
