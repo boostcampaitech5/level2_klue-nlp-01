@@ -127,7 +127,6 @@ def tokenized_dataset(dataset, tokenizer, tokenizer_config):
 def get_ref_inputids(tokenizer, ref_sent: list):
     input_ids_ls = [tokenizer.encode(sent) for sent in ref_sent]
     max_len = max([len(ls) for ls in input_ids_ls])
-    #input_ids = [ls + [1.0]*(max_len-len(ls)) for ls in input_ids_ls]
     input_ids = [ls + [0]*(max_len-len(ls)) for ls in input_ids_ls]
     input_mask = [ [1.0]*len(ls) + [0]*(max_len-len(ls)) for ls in input_ids_ls]
     input_ids = torch.tensor(input_ids, dtype=torch.long)
