@@ -100,7 +100,7 @@ def base_train(config, device):
     # setting model hyperparameter
     model_config = AutoConfig.from_pretrained(model_name)
     model_config.num_labels = CONFIG.NUM_LABELS
-    model_config.hidden_dropout_prob = 0.3
+    model_config.hidden_dropout_prob = 0.1
 
     # model = CustomModel(config=model_config)
     model = AutoModelForSequenceClassification.from_pretrained(model_name, config=model_config)
