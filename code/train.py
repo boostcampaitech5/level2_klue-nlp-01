@@ -198,7 +198,7 @@ def custom_train(config, device):
     model_config = AutoConfig.from_pretrained(model_name)
     model_config.num_labels = CONFIG.NUM_LABELS
 
-    model = CustomModel(config=model_config, n_class=30, ref_input_ids=ref_input_ids, ref_mask=ref_mask, hidden_size=768, PRE_TRAINED_MODEL_NAME="klue/bert-base")
+    model = CustomModel(config=model_config, n_class=30, ref_input_ids=ref_input_ids, ref_mask=ref_mask, hidden_size=768, PRE_TRAINED_MODEL_NAME=config.model)
     # model = AutoModelForSequenceClassification.from_pretrained(model_name, config=model_config)
     model.resize_token_embeddings(len(tokenizer))
     model.to(device)
