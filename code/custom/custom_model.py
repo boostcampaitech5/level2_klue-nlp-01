@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from transformers import BertModel, PreTrainedModel
+from transformers import RobertaModel, PreTrainedModel
 
 class CustomModel(PreTrainedModel):
     """새로운 레이어를 추가하거나, loss fucntion을 수정하는 등, 모델을 커스텀 하기 위한 클래스입니다.
@@ -13,7 +13,7 @@ class CustomModel(PreTrainedModel):
         self.hidden_size = hidden_size
         self.ref_input_ids = ref_input_ids
         self.ref_mask = ref_mask
-        self.bone = BertModel.from_pretrained(PRE_TRAINED_MODEL_NAME) # https://huggingface.co/transformers/model_doc/bert.html#bertmodel
+        self.bone = RobertaModel.from_pretrained(PRE_TRAINED_MODEL_NAME) # https://huggingface.co/transformers/model_doc/bert.html#bertmodel
 
         self.ref_value = nn.Linear(in_features=self.hidden_size, out_features=self.hidden_size) 
         self.ref_key = nn.Linear(in_features=self.hidden_size, out_features=self.hidden_size) 
