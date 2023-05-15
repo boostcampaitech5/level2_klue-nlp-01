@@ -12,6 +12,7 @@ from custom.custom_trainer import CustomTrainer
 from custom.custom_dataset import my_load_train_dataset
 from constants import CONFIG
 
+NUM_LABELS:int = 30
 
 def klue_re_micro_f1(preds, labels):
     """KLUE-RE micro f1 (except no_relation)"""
@@ -139,7 +140,8 @@ def custom_train(config, device):
     '''
     train_config = config.train
     loss_config = config.loss
-
+    NUM_LABELS  = config.num_labels
+    
     # model_name 및 tokenizer 호출
     model_name = config.model_name
     tokenizer = AutoTokenizer.from_pretrained(model_name)
