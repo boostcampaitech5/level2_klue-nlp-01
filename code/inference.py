@@ -11,7 +11,7 @@ import pickle as pickle
 import numpy as np
 from tqdm import tqdm
 # from load_data import num_to_label, load_test_dataset
-from custom.custom_dataset import num_to_label, load_test_dataset
+from custom.custom_dataset import num_to_label, my_load_test_dataset, RE_Dataset
 
 def test(model, tokenized_sent, device, config):
     """
@@ -98,6 +98,7 @@ def custom_inference(config, device):
       주어진 dataset csv 파일과 같은 형태일 경우 inference 가능한 코드입니다.
     """
     inference_config = config.inference
+    NUM_LABELS  = config.num_labels
     
     # 토크나이저 호출
     tokenizer_name = config.model_name
@@ -125,31 +126,49 @@ def custom_inference(config, device):
     model = AutoModelForSequenceClassification.from_pretrained(model_dir)
     model.resize_token_embeddings(len(tokenizer))
     model.to(device)
-
-    # test 데이터셋 호출
-    test_dataset_dir = config.path.test_path
-    test_id, test_dataset, test_label = load_test_dataset(test_dataset_dir, tokenizer, config.tokenizer)
-    Re_test_dataset = RE_Dataset(test_dataset, test_label)
-
-    # 정답 예측
-    pred_answer, output_prob = test(model, Re_test_dataset, device, config)  # model에서 class 추론
-    pred_answer = num_to_label(pred_answer)  # 숫자로 된 class를 원래 문자열 라벨로 변환.
-
-    # 예측된 정답을 DataFrame으로 저장
-    #########################################################
-    # 아래 directory와 columns의 형태는 지켜주시기 바랍니다.
-    output = pd.DataFrame({'id': test_id, 'pred_label': pred_answer, 'probs': output_prob, })
-
+    
     # prediction 폴더 존재 확인
     if not os.path.exists(CONFIG.PREDICTTION_PATH):
         os.makedirs(CONFIG.PREDICTTION_PATH)
+    
+    ####################################### dev #######################################
+    # dev 데이터로 결과 눈으로 확인해보기
+    dev_id, dev_sentences, dev_dataset, dev_label = my_load_test_dataset(config.path.val_path, tokenizer, config.tokenizer, NUM_LABELS)
+    dev_dataset = RE_Dataset(dev_dataset, dev_label)
+    pred_answer, output_prob = test(model, dev_dataset, device, config)  # model에서 class 추론
+    output = pd.DataFrame({'id': dev_id, 'sentence' : dev_sentences, 'label' : dev_label, 'pred_label': pred_answer, 'probs': output_prob, })
     
     # prediction 저장 폴더 생성
     if not os.path.exists(os.path.join(inference_config.output_dir, inference_dir)):
         os.makedirs(os.path.join(inference_config.output_dir, inference_dir))
         
     # 최종적으로 완성된 예측한 라벨 csv 파일 형태로 저장.
-    file_path = os.path.join(inference_config.output_dir, inference_dir, inference_config.output_file)
+    file_path = os.path.join(inference_config.output_dir, inference_dir, f"dev_{inference_config.output_file}")
     output.to_csv(file_path, index=False)
+    
+    ####################################### Test #######################################
+    # test 데이터셋 호출
+    test_dataset_dir = config.path.test_path
+    test_id, _, test_dataset, test_label = my_load_test_dataset(test_dataset_dir, tokenizer, config.tokenizer, NUM_LABELS)
+    test_dataset = RE_Dataset(test_dataset, test_label)
+
+    # 정답 예측
+    pred_answer, output_prob = test(model, test_dataset, device, config)  # model에서 class 추론
+    # pred_answer = num_to_label(pred_answer)  # 숫자로 된 class를 원래 문자열 라벨로 변환.
+
+    # 예측된 정답을 DataFrame으로 저장
+    #########################################################
+    # 아래 directory와 columns의 형태는 지켜주시기 바랍니다.
+    output = pd.DataFrame({'id': test_id, 'pred_label': pred_answer, 'probs': output_prob, })
+    
+    # prediction 저장 폴더 생성
+    if not os.path.exists(os.path.join(inference_config.output_dir, inference_dir)):
+        os.makedirs(os.path.join(inference_config.output_dir, inference_dir))
+        
+    # 최종적으로 완성된 예측한 라벨 csv 파일 형태로 저장.
+    file_path = os.path.join(inference_config.output_dir, inference_dir, f"test_{inference_config.output_file}")
+    output.to_csv(file_path, index=False)
+    
+    
     #### 필수!! ##############################################
     print('---- Finish! ----')
