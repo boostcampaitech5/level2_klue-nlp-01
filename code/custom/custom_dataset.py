@@ -58,42 +58,39 @@ def label_to_num(label):
 
 
 def preprocessing_dataset(dataset):
-    """
-        처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다.
-        
-        dataset의 entity 데이터를 확인해 Type에 따라 special 토큰을 추가합니다.
-        # PER(사람), ORG(조직), DAT(시간), LOC(장소), POH(기타 표현), NOH(기타 수량 표현)
-        
-        ex) 이 돈가스집은 <O:PER>백종원</O:PER> <S:ORG>더본코리아</S:ORG> 대표 ...
-    """
-    
+    """ 처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다."""
+
     subject_entity = []
     object_entity = []
     sentences = []
     data_length = len(dataset)
-    
-    for idx in tqdm(range(data_length)):
+
+    for idx in range(data_length):
         row = dataset.iloc[idx].to_dict()
         sentence, sbj_data, obj_data = row["sentence"], eval(row["subject_entity"]), eval(row["object_entity"])
-        
+
         sbj_word, sbj_start_id, sbj_end_id, sbj_type = sbj_data['word'], sbj_data['start_idx'], sbj_data['end_idx'], sbj_data['type']
         obj_word, obj_start_id, obj_end_id, obj_type = obj_data['word'], obj_data['start_idx'], obj_data['end_idx'], obj_data['type']
         
-        # entity의 위치에 따라 토큰을 추가하는 순서를 다르게 합니다.
+        trans = {"PER": "사람", "ORG": "단체", "DAT": "날짜", "LOC": "위치", "POH": "기타", "NOH": "수량"}
+
         if sbj_start_id < obj_start_id:
-            sentence = sentence[:obj_start_id] + f"<O:{obj_type}>" + obj_word + f"</O:{obj_type}>" + sentence[obj_end_id+1:]
-            sentence = sentence[:sbj_start_id] + f"<S:{sbj_type}>" + sbj_word + f"</S:{sbj_type}>" + sentence[sbj_end_id+1:]
+            sentence = sentence[:obj_start_id] + f"@*{trans[obj_type]}*" + obj_word + f"@" + sentence[obj_end_id+1:]
+            sentence = sentence[:sbj_start_id] + f"#^{trans[sbj_type]}^" + sbj_word + f"#" + sentence[sbj_end_id+1:]
         else:
-            sentence = sentence[:sbj_start_id] + f"<S:{sbj_type}>" + sbj_word + f"</S:{sbj_type}>" + sentence[sbj_end_id+1:]
-            sentence = sentence[:obj_start_id] + f"<O:{obj_type}>" + obj_word + f"</O:{obj_type}>" + sentence[obj_end_id+1:]
+            sentence = sentence[:sbj_start_id] + f"#^{trans[sbj_type]}^" + sbj_word + f"#" + sentence[sbj_end_id+1:]
+            sentence = sentence[:obj_start_id] + f"@*{trans[obj_type]}*" + obj_word + f"@" + sentence[obj_end_id+1:]
+
+        sentence = sentence + f'이 문장에서 {sbj_word}는 {obj_word}의 {trans[sbj_type]}이다. 이 때, 이 둘의 관계는'
+
 
         subject_entity.append(sbj_word)
         object_entity.append(obj_word)
         sentences.append(sentence)
-        
+
     out_dataset = pd.DataFrame({'id': dataset['id'], 'sentence': sentences,
                                'subject_entity': subject_entity, 'object_entity': object_entity, 'label': dataset['label'], })
-    
+
     return out_dataset
 
 
