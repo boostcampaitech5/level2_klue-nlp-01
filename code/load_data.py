@@ -82,7 +82,15 @@ def label_to_num(label):
 
 
 def preprocessing_dataset(dataset):
-    """ 처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다."""
+    """ 처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다.
+    type entity_marker
+    원본) 이순신은 조선 전기의 무신이다.
+    적용 후) @*사람*이순신@은 #^날짜^조선# 전기의 무신이다.
+    
+    multi-sentence
+    원본) 이순신은 조선 전기의 무신이다.
+    적용 후) 이순신은 조선 전기의 무신이다. 이 문장에서 조선은 이순신의 날짜이다. 이 때, 이 둘의 관계는
+    """
 
     subject_entity = []
     object_entity = []
