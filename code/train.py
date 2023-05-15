@@ -2,6 +2,8 @@ import pickle as pickle
 import sklearn
 import numpy as np
 import torch
+import shutil
+import os
 
 from sklearn.metrics import accuracy_score
 from transformers import AutoConfig, TrainingArguments, EarlyStoppingCallback, AutoModelForSequenceClassification, AutoTokenizer
@@ -159,7 +161,7 @@ def custom_train(config, device):
     )
 
     # make dataset for pytorch.
-    train_dataset, val_dataset = my_load_train_dataset(config['path'], tokenizer, config.tokenizer)
+    train_dataset, val_dataset = my_load_train_dataset(config['path'], tokenizer, config.tokenizer, NUM_LABELS)
 
     #setting model hyperparameter
     model_config = AutoConfig.from_pretrained(model_name)
@@ -194,6 +196,7 @@ def custom_train(config, device):
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
         compute_metrics=compute_metrics,
+        loss_type=loss_config.loss_type,
         device=device,
         callbacks=[EarlyStoppingCallback(
             early_stopping_patience=train_config.early_stopping_patience)]
