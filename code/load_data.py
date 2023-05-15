@@ -82,25 +82,42 @@ def label_to_num(label):
 
 
 def preprocessing_dataset(dataset):
-    """처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다."""
+    """ 처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다."""
+
     subject_entity = []
     object_entity = []
-    for i, j in zip(dataset["subject_entity"], dataset["object_entity"]):
-        i = i[1:-1].split(",")[0].split(":")[1]
-        j = j[1:-1].split(",")[0].split(":")[1]
+    sentences = []
+    data_length = len(dataset)
 
-        subject_entity.append(i)
-        object_entity.append(j)
-    out_dataset = pd.DataFrame(
-        {
-            "id": dataset["id"],
-            "sentence": dataset["sentence"],
-            "subject_entity": subject_entity,
-            "object_entity": object_entity,
-            "label": dataset["label"],
-        }
-    )
+    for idx in range(data_length):
+        row = dataset.iloc[idx].to_dict()
+        sentence, sbj_data, obj_data = row["sentence"], eval(row["subject_entity"]), eval(row["object_entity"])
+
+        sbj_word, sbj_start_id, sbj_end_id, sbj_type = sbj_data['word'], sbj_data['start_idx'], sbj_data['end_idx'], sbj_data['type']
+        obj_word, obj_start_id, obj_end_id, obj_type = obj_data['word'], obj_data['start_idx'], obj_data['end_idx'], obj_data['type']
+        
+        trans = {"PER": "사람", "ORG": "단체", "DAT": "날짜", "LOC": "위치", "POH": "기타", "NOH": "수량"}
+
+        if sbj_start_id < obj_start_id:
+            sentence = sentence[:obj_start_id] + f"@*{trans[obj_type]}*" + obj_word + f"@" + sentence[obj_end_id+1:]
+            sentence = sentence[:sbj_start_id] + f"#^{trans[sbj_type]}^" + sbj_word + f"#" + sentence[sbj_end_id+1:]
+        else:
+            sentence = sentence[:sbj_start_id] + f"#^{trans[sbj_type]}^" + sbj_word + f"#" + sentence[sbj_end_id+1:]
+            sentence = sentence[:obj_start_id] + f"@*{trans[obj_type]}*" + obj_word + f"@" + sentence[obj_end_id+1:]
+
+        sentence = sentence + f'이 문장에서 {obj_word}는 {sbj_word}의 {trans[obj_type]}이다. 이 때, 이 둘의 관계는'
+
+
+        subject_entity.append(sbj_word)
+        object_entity.append(obj_word)
+        sentences.append(sentence)
+
+    #breakpoint()
+    out_dataset = pd.DataFrame({'id': dataset['id'], 'sentence': sentences,
+                               'subject_entity': subject_entity, 'object_entity': object_entity, 'label': dataset['label'], })
+
     return out_dataset
+
 
 
 def load_data(dataset_dir):
