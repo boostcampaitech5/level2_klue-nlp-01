@@ -6,7 +6,7 @@ def load_config(args):
     config = OmegaConf.load(CONFIG.CONFIG_PATH)
     
     # inference이 있는지 last_file을 하는지 확인
-    if args.inference or args.last_file:
+    if args.inference:
         config.only_inference = True
     else:
         config.only_inference = False
