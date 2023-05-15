@@ -12,10 +12,11 @@ from transformers import (
     AutoTokenizer,
 )
 from load_data import load_train_dataset
+from utils.data_util import MINOR_LABEL_IDS, REF_SENT, LABEL_TO_ID
 
-# from custom.custom_model import CustomModel
+from custom.custom_model import CustomModel
 from custom.custom_trainer import CustomTrainer
-from custom.custom_dataset import my_load_train_dataset
+from custom.custom_dataset import my_load_train_dataset, get_ref_inputids
 from constants import CONFIG
 
 
@@ -185,6 +186,11 @@ def custom_train(config, device):
 
     tokenizer.add_special_tokens({"additional_special_tokens": list(set(special_token_list))})
 
+    ref_labels_id = MINOR_LABEL_IDS[:4]
+    ref_labels_id = sorted(ref_labels_id)
+    ref_sent = [REF_SENT[i] for i in ref_labels_id]
+    ref_input_ids, ref_mask = get_ref_inputids(tokenizer=tokenizer, ref_sent=ref_sent)
+
     # make dataset for pytorch.
     train_dataset, val_dataset = my_load_train_dataset(config["path"], tokenizer, config)
 
@@ -192,14 +198,16 @@ def custom_train(config, device):
     model_config = AutoConfig.from_pretrained(model_name)
     model_config.num_labels = CONFIG.NUM_LABELS
 
-    # model = CustomModel(model_config=model_config, model_name=model_name)
-    model = AutoModelForSequenceClassification.from_pretrained(model_name, config=model_config)
+    model = CustomModel(config=model_config, n_class=30, ref_input_ids=ref_input_ids, ref_mask=ref_mask, hidden_size=768, PRE_TRAINED_MODEL_NAME="klue/bert-base")
+    # model = AutoModelForSequenceClassification.from_pretrained(model_name, config=model_config)
     model.resize_token_embeddings(len(tokenizer))
     model.to(device)
+    model.init_weights()
 
     training_args = TrainingArguments(
         report_to=CONFIG.WANDB,
         seed=config.seed,
+        data_seed=42,
         output_dir=train_config.output_dir,
         save_total_limit=train_config.save_total_limit,
         save_strategy=train_config.save_strategy,
