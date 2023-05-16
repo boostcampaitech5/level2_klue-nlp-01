@@ -7,6 +7,7 @@ from transformers import AutoTokenizer
 from constants import CONFIG
 from sklearn.model_selection import StratifiedShuffleSplit
 import os
+import re
 
 
 class RE_Dataset(torch.utils.data.Dataset):
@@ -123,6 +124,41 @@ def preprocessing_dataset(dataset):
     #breakpoint()
     out_dataset = pd.DataFrame({'id': dataset['id'], 'sentence': sentences,
                                'subject_entity': subject_entity, 'object_entity': object_entity, 'label': dataset['label'], })
+    
+    # 전처리 -> 성능향상이 확실한, UNK로 표시되는 특수문자만 변경
+    sentence = out_dataset['sentence'].values
+
+    for i in range(len(sentence)):
+        ## 문자 변경
+        # sentence[i] = re.sub('[\u4E00-\u9FFF\uF900-\uFAFF\U00020000-\U0002FFFF]+', '[한자]', sentence[i])
+        # sentence[i] = re.sub('[\u4e00-\u9fff\u30a0-\u30ff\u3040-\u309f]+', '[일본어]', sentence[i])
+        # sentence[i] = re.sub('[\u0370-\u03FF&&[^A-Za-z]]+', '[그리스어]', sentence[i])
+        sentence[i] = re.sub('[–]', '-', sentence[i])
+        sentence[i] = re.sub('[∼～]', '~', sentence[i])
+        # sentence[i] = re.sub('[（「]', '(', sentence[i])
+        # sentence[i] = re.sub('[）」]', ')', sentence[i])
+        sentence[i] = re.sub('[？]', '?', sentence[i])
+        sentence[i] = re.sub('[»]', '<', sentence[i])
+        sentence[i] = re.sub('[«]', '>', sentence[i])
+        # sentence[i] = re.sub('[»《〈]', '<', sentence[i])
+        # sentence[i] = re.sub('[«》〉]', '>', sentence[i])
+        # sentence[i] = re.sub('[‘’]', '\'', sentence[i])
+        # sentence[i] = re.sub('[“”]', '\"', sentence[i])
+        # sentence[i] = re.sub('\(주\)', '㈜', sentence[i])
+        sentence[i] = re.sub('€', 'e', sentence[i])
+        
+        ## 특수문자, 한글, 영어 제외한 문자 제거
+        # sentence[i] = re.sub('[^\uAC00-\uD7AF\u1100-\u11FFa-zA-Z0-9{P}\s\(\)\,\~\.\:\"\'\-\·\[\]\/\;\!\?\|\&\*\★\<\>\（\「\）\」\《\〈\‘\’\“\”]+', '[문자]', sentence[i])
+        
+        ## 문자 제거 후 작업
+        # sentence[i] = re.sub('[(][\s\/\~]*[,]*[\s\/\~]*[)]', '', sentence[i]) # (,) 제거
+        # sentence[i] = re.sub('[(][\s]*[\,\.\:\!\;\/]+[\s]*', '(', sentence[i])
+        # sentence[i] = re.sub('[(][\s]*[\,\.\:\!\;\/]+[\s]*', '(', sentence[i])
+        # sentence[i] = re.sub('[(][\s]+', '(', sentence[i]) # 공백제거
+        # sentence[i] = re.sub('[\s]+[)]', ')', sentence[i]) # 공백제거
+        # sentence[i] = re.sub('[\s]{2,}', ' ', sentence[i]) # 띄어쓰기 2번 이상 제거
+        
+    out_dataset['sentence'].update(sentence)
 
     return out_dataset
 
