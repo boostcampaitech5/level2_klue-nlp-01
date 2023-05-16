@@ -20,9 +20,11 @@ train:
   greater_is_better: True
 
 loss:
-    loss_type: "focal"
-    alpha: 1.0
-    gamma: 2.0
+  loss_type: "ldam"
+  gamma: 2.0
+  max_m: 0.5
+  weight: 1.0
+  s: 35
 
 tokenizer:
   return_tensors: "pt"
