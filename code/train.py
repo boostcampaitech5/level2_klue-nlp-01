@@ -193,7 +193,10 @@ def custom_train(config, device):
     # ref_input_ids, ref_mask = get_ref_inputids(tokenizer=tokenizer, ref_sent=ref_sent)
 
     # make dataset for pytorch.
-    train_dataset, val_dataset = my_load_train_dataset(config['path'], tokenizer, config, NUM_LABELS)
+    train_dataset, val_dataset, class_num_list = load_train_dataset(
+        model_name, config["path"], config
+    )
+
 
     # setting model hyperparameter
     model_config = AutoConfig.from_pretrained(model_name)
@@ -201,7 +204,6 @@ def custom_train(config, device):
 
     # model = RE_Model(config=model_config, n_class=30, ref_input_ids=ref_input_ids, ref_mask=ref_mask, hidden_size=768, PRE_TRAINED_MODEL_NAME=model_name)
     model = CustomModel(model_config=model_config, model_name=model_name, device=device)
-    # model = AutoModelForSequenceClassification.from_pretrained(model_name, config=model_config)
 
     model.to(device)
     # model.init_weights()
@@ -224,6 +226,7 @@ def custom_train(config, device):
         weight_decay=train_config.weight_decay,
         metric_for_best_model=train_config.metric_for_best_model,
         greater_is_better=train_config.greater_is_better,
+        fp16=True,
     )
 
     trainer = CustomTrainer(
@@ -233,6 +236,11 @@ def custom_train(config, device):
         eval_dataset=val_dataset,
         compute_metrics=compute_metrics,
         loss_type=loss_config.loss_type,
+        focal_loss_gamma=loss_config.gamma,
+        class_num_list=class_num_list,
+        max_m=loss_config.max_m,
+        weight=loss_config.weight,
+        s=loss_config.s,
         device=device,
         callbacks=[
             EarlyStoppingCallback(early_stopping_patience=train_config.early_stopping_patience)
