@@ -182,7 +182,7 @@ def base_val_inference(config, device):
 
     # val 데이터셋 호출
     val_dataset_dir = os.path.join(f"./logs/{inference_dir}/", config.path.split_nopreprocess_val_path)
-    val_dataset = load_data(val_dataset_dir)
+    val_dataset = load_data(val_dataset_dir, config.tokenizer)
     val_id = val_dataset['id']
     val_label = label_to_num(val_dataset['label'].values)
     tokenized_val = tokenized_dataset(val_dataset, tokenizer, config.tokenizer)
@@ -254,7 +254,7 @@ def custom_val_inference(config, device):
     ## 변경필요
     # val 데이터셋 호출
     val_dataset_dir = os.path.join(f"./logs/{inference_dir}/", config.path.split_nopreprocess_val_path)
-    val_dataset = custom.load_data(val_dataset_dir)
+    val_dataset = custom.load_data(val_dataset_dir, config.tokenizer)
     val_id = val_dataset['id']
     val_label = custom.label_to_num(val_dataset['label'].values)
     tokenized_val = custom.tokenized_dataset(val_dataset, tokenizer, config.tokenizer)
