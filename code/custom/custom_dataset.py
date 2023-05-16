@@ -28,16 +28,16 @@ def my_load_train_dataset(path, tokenizer, config):
     """ csv 파일을 pytorch dataset으로 불러옵니다."""
 
     # DataFrame로 데이터셋 읽기
-    train_dataset = load_data(path.train_path)
-    val_dataset = load_data(path.val_path)
+    train_dataset = load_data(path.train_path, config)
+    val_dataset = load_data(path.val_path, config)
 
     # 데이터셋의 label을 불러옴
     train_label = label_to_num(train_dataset['label'].values)
     val_label = label_to_num(val_dataset['label'].values)
 
     # tokenizing dataset
-    tokenized_train = tokenized_dataset(train_dataset, tokenizer, config.tokenizer)
-    tokenized_val = tokenized_dataset(val_dataset, tokenizer, config.tokenizer)
+    tokenized_train = tokenized_dataset(train_dataset, tokenizer, config)
+    tokenized_val = tokenized_dataset(val_dataset, tokenizer, config)
 
     # make dataset for pytorch.
     train_dataset = RE_Dataset(tokenized_train, train_label)
@@ -45,14 +45,12 @@ def my_load_train_dataset(path, tokenizer, config):
 
     return train_dataset, val_dataset
 
+def load_data(dataset_dir, config):
+    """ csv 파일을 경로에 맡게 불러 옵니다. """
+    pd_dataset = pd.read_csv(dataset_dir)
+    dataset = preprocessing_dataset(pd_dataset, config.entity_marker_type)
 
-def label_to_num(label):
-    """lable을 pickle에 저장된 dict에 따라 int로 변환합니다."""
-    num_label = []
-    with open(CONFIG.DICT_LABEL_TO_NUM, 'rb') as f:
-        dict_label_to_num = pickle.load(f)
-    for v in label:
-        num_label.append(dict_label_to_num[v])
+    return dataset
 
     return num_label
 
@@ -93,14 +91,15 @@ def preprocessing_dataset(dataset):
 
     return out_dataset
 
+def label_to_num(label):
+    """lable을 pickle에 저장된 dict에 따라 int로 변환합니다."""
+    num_label = []
+    with open(CONFIG.DICT_LABEL_TO_NUM, 'rb') as f:
+        dict_label_to_num = pickle.load(f)
+    for v in label:
+        num_label.append(dict_label_to_num[v])
 
-def load_data(dataset_dir):
-    """ csv 파일을 경로에 맡게 불러 옵니다. """
-    pd_dataset = pd.read_csv(dataset_dir)
-    dataset = preprocessing_dataset(pd_dataset)
-
-    return dataset
-
+    return num_label
 
 def tokenized_dataset(dataset, tokenizer, tokenizer_config):
     """ tokenizer에 따라 sentence를 tokenizing 합니다."""
@@ -126,7 +125,7 @@ def tokenized_dataset(dataset, tokenizer, tokenizer_config):
 '''
 def load_test_dataset(dataset_dir, tokenizer, tokenizer_config):
     """test dataset을 불러온 후, tokenizing 합니다."""
-    test_dataset = load_data(dataset_dir)
+    test_dataset = load_data(dataset_dir, tokenizer_config)
     test_label = list(map(int, test_dataset['label'].values))
 
     # tokenizing dataset
