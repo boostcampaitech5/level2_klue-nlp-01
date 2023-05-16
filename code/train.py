@@ -12,7 +12,7 @@ from transformers import (
     AutoTokenizer,
 )
 from load_data import load_train_dataset
-from utils.data_util import MINOR_LABEL_IDS, REF_SENT, LABEL_TO_ID
+from utils.meta_data import MINOR_LABEL_IDS, REF_SENT, LABEL_TO_ID
 
 from custom.custom_model import CustomModel
 from custom.custom_trainer import CustomTrainer
