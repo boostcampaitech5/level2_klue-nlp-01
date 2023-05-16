@@ -31,6 +31,7 @@ tokenizer:
   truncation: True
   max_length: 256
   add_special_tokens: True
+  entity_marker_type : "kor_typed_entity_marker_punct"
 
 inference:
   model_dir: "./best_model"
