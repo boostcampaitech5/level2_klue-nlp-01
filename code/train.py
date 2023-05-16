@@ -186,7 +186,7 @@ def custom_train(config, device):
     tokenizer.add_special_tokens({"additional_special_tokens": list(set(special_token_list))})
 
     # make dataset for pytorch.
-    train_dataset, val_dataset = my_load_train_dataset(config["path"], tokenizer, config)
+    train_dataset, val_dataset = my_load_train_dataset(config["path"], tokenizer, config.tokenizer)
 
     # setting model hyperparameter
     model_config = AutoConfig.from_pretrained(model_name)
