@@ -52,10 +52,17 @@ def load_data(dataset_dir, config):
 
     return dataset
 
-    return num_label
-
-
-def preprocessing_dataset(dataset):
+def preprocessing_dataset(dataset, entity_marker_type):
+    '''
+        < entity_marker_type >
+        "entity_mask" : [SUBJ-PER] ... [OBJ-LOC]
+        "entity_marker" : [E1]부덕[/E1] ... [E2]판교[/E2]
+        "entity_marker_punct" : @부덕@ ... #판교#
+        "typed_entity_marker" : <S:PER>부덕</S:PER> ... <O:LOC>판교</O:LOC>
+        "typed_entity_marker_punct" : @*PER*부덕@ ... #^LOC^판교#
+        "kor_typed_entity_marker" : <S:사람>부덕</S:사람> ... <O:위치>판교</O:위치>
+        "kor_typed_entity_marker_punct" : @*사람*부덕@ ... #^위치^판교#
+    '''
     """ 처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다."""
 
     subject_entity = []
@@ -72,14 +79,57 @@ def preprocessing_dataset(dataset):
         
         trans = {"PER": "사람", "ORG": "단체", "DAT": "날짜", "LOC": "위치", "POH": "기타", "NOH": "수량"}
 
-        if sbj_start_id < obj_start_id:
-            sentence = sentence[:obj_start_id] + f"@*{trans[obj_type]}*" + obj_word + f"@" + sentence[obj_end_id+1:]
-            sentence = sentence[:sbj_start_id] + f"#^{trans[sbj_type]}^" + sbj_word + f"#" + sentence[sbj_end_id+1:]
-        else:
-            sentence = sentence[:sbj_start_id] + f"#^{trans[sbj_type]}^" + sbj_word + f"#" + sentence[sbj_end_id+1:]
-            sentence = sentence[:obj_start_id] + f"@*{trans[obj_type]}*" + obj_word + f"@" + sentence[obj_end_id+1:]
+        if entity_marker_type == "entity_mask":
+            if sbj_start_id < obj_start_id:
+                sentence = sentence[:obj_start_id] + f"[OBJ-{obj_type}]" + sentence[obj_end_id+1:]
+                sentence = sentence[:sbj_start_id] + f"[SUBJ-{sbj_type}]" + sentence[sbj_end_id+1:]
+            else:
+                sentence = sentence[:sbj_start_id] + f"[SUBJ-{sbj_type}]" + sentence[sbj_end_id+1:]
+                sentence = sentence[:obj_start_id] + f"[OBJ-{obj_type}]" + sentence[obj_end_id+1:]
+        elif entity_marker_type == "entity_marker":
+            if sbj_start_id < obj_start_id:
+                sentence = sentence[:obj_start_id] + f"[E2]{obj_word}[/E2]" + sentence[obj_end_id+1:]
+                sentence = sentence[:sbj_start_id] + f"[E1]{sbj_word}[/E1]" + sentence[sbj_end_id+1:]
+            else:
+                sentence = sentence[:sbj_start_id] + f"[E1]{sbj_word}[/E1]" + sentence[sbj_end_id+1:]
+                sentence = sentence[:obj_start_id] + f"[E2]{obj_word}[/E2]" + sentence[obj_end_id+1:]
+        elif entity_marker_type == "entity_marker_punct":
+            if sbj_start_id < obj_start_id:
+                sentence = sentence[:obj_start_id] + f"#{obj_word}#" + sentence[obj_end_id+1:]
+                sentence = sentence[:sbj_start_id] + f"@{sbj_word}@" + sentence[sbj_end_id+1:]
+            else:
+                sentence = sentence[:sbj_start_id] + f"@{sbj_word}@" + sentence[sbj_end_id+1:]
+                sentence = sentence[:obj_start_id] + f"#{obj_word}#" + sentence[obj_end_id+1:]
+        elif entity_marker_type == "typed_entity_marker":
+            if sbj_start_id < obj_start_id:
+                sentence = sentence[:obj_start_id] + f"<O:{obj_type}>{obj_word}</O:{obj_type}>" + sentence[obj_end_id+1:]
+                sentence = sentence[:sbj_start_id] + f"<S:{sbj_type}>{sbj_word}</S:{sbj_type}>" + sentence[sbj_end_id+1:]
+            else:
+                sentence = sentence[:sbj_start_id] + f"<S:{sbj_type}>{sbj_word}</S:{sbj_type}>" + sentence[sbj_end_id+1:]
+                sentence = sentence[:obj_start_id] + f"<O:{obj_type}>{obj_word}</O:{obj_type}>" + sentence[obj_end_id+1:]
+        elif entity_marker_type == "typed_entity_marker_punct":
+            if sbj_start_id < obj_start_id:
+                sentence = sentence[:obj_start_id] + f"@*{obj_type}*" + obj_word + f"@" + sentence[obj_end_id+1:]
+                sentence = sentence[:sbj_start_id] + f"#^{sbj_type}^" + sbj_word + f"#" + sentence[sbj_end_id+1:]
+            else:
+                sentence = sentence[:sbj_start_id] + f"#^{sbj_type}^" + sbj_word + f"#" + sentence[sbj_end_id+1:]
+                sentence = sentence[:obj_start_id] + f"@*{obj_type}*" + obj_word + f"@" + sentence[obj_end_id+1:]
+        elif entity_marker_type == "kor_typed_entity_marker":
+            if sbj_start_id < obj_start_id:
+                sentence = sentence[:obj_start_id] + f"<O:{trans[obj_type]}>{obj_word}</O:{trans[obj_type]}>" + sentence[obj_end_id+1:]
+                sentence = sentence[:sbj_start_id] + f"<S:{trans[sbj_type]}>{sbj_word}</S:{trans[sbj_type]}>" + sentence[sbj_end_id+1:]
+            else:
+                sentence = sentence[:sbj_start_id] + f"<S:{trans[sbj_type]}>{sbj_word}</S:{trans[sbj_type]}>" + sentence[sbj_end_id+1:]
+                sentence = sentence[:obj_start_id] + f"<O:{trans[obj_type]}>{obj_word}</O:{trans[obj_type]}>" + sentence[obj_end_id+1:]
+        elif entity_marker_type == "kor_typed_entity_marker_punct":
+            if sbj_start_id < obj_start_id:
+                sentence = sentence[:obj_start_id] + f"@*{trans[obj_type]}*" + obj_word + f"@" + sentence[obj_end_id+1:]
+                sentence = sentence[:sbj_start_id] + f"#^{trans[sbj_type]}^" + sbj_word + f"#" + sentence[sbj_end_id+1:]
+            else:
+                sentence = sentence[:sbj_start_id] + f"#^{trans[sbj_type]}^" + sbj_word + f"#" + sentence[sbj_end_id+1:]
+                sentence = sentence[:obj_start_id] + f"@*{trans[obj_type]}*" + obj_word + f"@" + sentence[obj_end_id+1:]
 
-        sentence = sentence + f'이 문장에서 {sbj_word}는 {obj_word}의 {trans[sbj_type]}이다. 이 때, 이 둘의 관계는'
+        # sentence = sentence + f'이 문장에서 {sbj_word}는 {obj_word}의 {trans[sbj_type]}이다. 이 때, 이 둘의 관계는'
 
 
         subject_entity.append(sbj_word)
