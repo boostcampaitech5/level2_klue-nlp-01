@@ -195,7 +195,7 @@ def base_val_inference(config, device):
         
 
     # 모델 불러오기
-    model_dir = f"./logs/{inference_dir}/pytorch_model.pt"
+    model_dir = f"./logs/{inference_dir}/best_model"
     model = AutoModelForSequenceClassification.from_pretrained(model_dir)
     model.to(device)
 
