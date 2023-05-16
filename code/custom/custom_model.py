@@ -112,9 +112,9 @@ class CustomModel(PreTrainedModel):
                     attention_mask=attention_mask,
                     token_type_ids=token_type_ids, 
                     labels=labels)
+        # breakpoint()
+        # if labels is not None:
+        #     loss = self.loss(logits, labels)
+        #     return {"loss": loss, "logits": logits}
 
-        if labels is not None:
-            loss = self.loss(logits, labels)
-            return {"loss": loss, "logits": logits}
-
-        return {"logits": logits}
+        return logits
