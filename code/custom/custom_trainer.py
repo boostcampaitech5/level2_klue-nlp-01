@@ -4,18 +4,24 @@ import numpy as np
 import torch.nn as nn
 from torch.nn import functional as F
 from typing import Dict, Union, Any
+import wandb
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 
 class FocalLoss(nn.Module):
-    """ 
+    """
     gamma 하이퍼파라미터를 받아 focal loss를 리턴시킵니다.
     https://discuss.pytorch.org/t/is-this-a-correct-implementation-for-focal-loss-in-pytorch/43327/16
     parameter:
         gamma: easy/ hard 가중치
     """
+
     def __init__(self, gamma=2.0, device=None):
         super().__init__()
         self.gamma = gamma
-        self.device=device
+        self.device = device
 
     def forward(self, input, target):
         if isinstance(input, np.ndarray):
@@ -23,21 +29,21 @@ class FocalLoss(nn.Module):
         if isinstance(target, np.ndarray):
             target = torch.tensor(target, dtype=torch.long).to(self.device)
 
-        ce_loss = F.cross_entropy(input, target, reduction='none')
+        ce_loss = F.cross_entropy(input, target, reduction="none")
         pt = torch.exp(-ce_loss)
         focal_loss = ((1 - pt) ** self.gamma * ce_loss).mean()
         return focal_loss
 
-        
 
 class ClassWeights(nn.Module):
-    """"Effective Number of Samples(ENS) 에포크 초기일수록 소수 클래스에 집중됩니다"""
+    """ "Effective Number of Samples(ENS) 에포크 초기일수록 소수 클래스에 집중됩니다"""
+
     def __init__(self, class_num_list, beta=0.9999, device=None):
         super().__init__()
         self.class_num_list = class_num_list
         self.beta = beta
         self.weights = (1.0 - self.beta) / (1.0 - np.power(self.beta, class_num_list))
-        self.device=device
+        self.device = device
 
     def get_weights(self, epoch, num_epochs):
         weights = self.weights * (self.beta ** (num_epochs - epoch))
@@ -54,6 +60,7 @@ class LDAMLoss(nn.Module):
         weight: 클래스 별 가중치
         s: 하이퍼 파라미터
     """
+
     def __init__(self, class_num_list, max_m=0.5, weight=None, s=30, device=None):
         super().__init__()
         delta = 1.0 / np.sqrt(np.sqrt(class_num_list))
@@ -66,44 +73,90 @@ class LDAMLoss(nn.Module):
 
     def forward(self, x, target):
         index = torch.zeros_like(x, dtype=torch.uint8)
-        index.scatter_(1, target.data.view(-1, 1), 1) 
-        
+        index.scatter_(1, target.data.view(-1, 1), 1)
+
         index_float = index.type(torch.cuda.FloatTensor)
-        batch_m = torch.matmul(self.delta[None, :], index_float.transpose(0,1))
+        batch_m = torch.matmul(self.delta[None, :], index_float.transpose(0, 1))
         batch_m = batch_m.view((-1, 1))
         x_m = x - batch_m
-    
+
         output = torch.where(index, x_m, x)
-        return F.cross_entropy(self.s*output, target, weight=self.weight)
+        return F.cross_entropy(self.s * output, target, weight=self.weight)
 
 
 class CustomTrainer(Trainer):
     """커스텀 된 트레이너를 만드는 클래스입니다."""
-    def __init__(self, *args, loss_type=None, focal_loss_gamma=2.0, class_num_list=None, max_m=0.5, weight=None, s=30, device=None, **kwargs):
+
+    def __init__(
+        self,
+        *args,
+        loss_type=None,
+        focal_loss_gamma=2.0,
+        class_num_list=None,
+        max_m=0.5,
+        weight=None,
+        s=30,
+        device=None,
+        **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.loss_type = loss_type
 
-        if loss_type=="focal":
+        if loss_type == "focal":
             self.loss = FocalLoss(gamma=focal_loss_gamma, device=device)
-        elif self.loss_type=="ldam":
+        elif self.loss_type == "ldam":
             assert class_num_list is not None, "class_num_list가 필요합니다."
             self.loss = LDAMLoss(class_num_list, max_m=0.5, weight=None, s=30, device=device)
             self.class_weights = ClassWeights(class_num_list, device=device)
         else:
             self.loss = FocalLoss(0.0, device=device)
 
-
     def compute_loss(self, model, inputs, return_outputs=False):
-        """ 기존 loss를 커스텀loss로 변경합니다. (None:CE loss) """
+        """기존 loss를 커스텀loss로 변경합니다. (None:CE loss)"""
         labels = inputs.get("labels")
         outputs = model(**inputs)
         logits = outputs.get("logits")
 
         if self.loss_type == "ldam":
-            self.loss.weight = self.class_weights.get_weights(self.state.epoch, self.args.num_train_epochs)
-            
+            self.loss.weight = self.class_weights.get_weights(
+                self.state.epoch, self.args.num_train_epochs
+            )
+
         loss = self.loss(logits, labels)
         return (loss, outputs) if return_outputs else loss
+
+    def evaluation_loop(self, *args, **kwargs):
+        """evaluation단계에서 confusion matrix를 생성하기위한 작업을 추가합니다."""
+        output = super().evaluation_loop(*args, **kwargs)
+
+        preds = output.predictions
+        labels = output.label_ids
+        self.draw_confusion_matrix(preds, labels)
+
+        return output
+
+    def draw_confusion_matrix(self, pred, label_ids):
+        """seaborn을 사용하여 confusion matrix를 출력하고 wandb로 전달합니다."""
+        cm = confusion_matrix(label_ids, np.argmax(pred, axis=-1))
+        cmn = cm.astype("float") / cm.sum(axis=1)[:, np.newaxis] * 100
+        cmn = cmn.astype("int")
+        fig = plt.figure(figsize=(22, 8))
+        ax1 = fig.add_subplot(1, 2, 1)
+        ax2 = fig.add_subplot(1, 2, 2)
+
+        # > non-normalized confusion matrix
+        cm_plot = sns.heatmap(cm, cmap="Blues", fmt="d", annot=True, ax=ax1)
+        cm_plot.set_xlabel("pred")
+        cm_plot.set_ylabel("true")
+        cm_plot.set_title("confusion matrix")
+
+        # > normalized confusion matrix
+        cmn_plot = sns.heatmap(cmn, cmap="Blues", fmt="d", annot=True, ax=ax2)
+        cmn_plot.set_xlabel("pred")
+        cmn_plot.set_ylabel("true")
+        cmn_plot.set_title("confusion matrix normalize")
+        wandb.log({"confusion_matrix": wandb.Image(fig)})
+
 
     def training_step(self, model: nn.Module, inputs: Dict[str, Union[torch.Tensor, Any]]) -> torch.Tensor:
         return super().training_step(model, inputs)
