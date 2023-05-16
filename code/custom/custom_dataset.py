@@ -23,7 +23,7 @@ class RE_Dataset(torch.utils.data.Dataset):
         return len(self.labels)
 
 
-def my_load_train_dataset(path, tokenizer, tokenizer_config, num_labels):
+def my_load_train_dataset(path, tokenizer, config, num_labels):
     """ csv 파일을 pytorch dataset으로 불러옵니다."""
 
     # DataFrame로 데이터셋 읽기
@@ -37,8 +37,8 @@ def my_load_train_dataset(path, tokenizer, tokenizer_config, num_labels):
     val_label = val_dataset['label'].values
 
     # tokenizing dataset
-    tokenized_train = tokenized_dataset(train_dataset, tokenizer, tokenizer_config)
-    tokenized_val = tokenized_dataset(val_dataset, tokenizer, tokenizer_config)
+    tokenized_train = tokenized_dataset(train_dataset, tokenizer, config.tokenizer)
+    tokenized_val = tokenized_dataset(val_dataset, tokenizer, config.tokenizer)
 
     # make dataset for pytorch.
     train_dataset = RE_Dataset(tokenized_train, train_label)
@@ -67,27 +67,29 @@ def preprocessing_dataset(dataset, num_labels):
         
         ex) 이 돈가스집은 <O:PER>백종원</O:PER> <S:ORG>더본코리아</S:ORG> 대표 ...
     """
-    
     subject_entity = []
     object_entity = []
     sentences = []
     labels = []
     data_length = len(dataset)
-    
-    for idx in tqdm(range(data_length)):
+
+    for idx in range(data_length):
         row = dataset.iloc[idx].to_dict()
         sentence, sbj_data, obj_data = row["sentence"], eval(row["subject_entity"]), eval(row["object_entity"])
-        
+
         sbj_word, sbj_start_id, sbj_end_id, sbj_type = sbj_data['word'], sbj_data['start_idx'], sbj_data['end_idx'], sbj_data['type']
         obj_word, obj_start_id, obj_end_id, obj_type = obj_data['word'], obj_data['start_idx'], obj_data['end_idx'], obj_data['type']
         
-        # entity의 위치에 따라 토큰을 추가하는 순서를 다르게 합니다.
+        trans = {"PER": "사람", "ORG": "단체", "DAT": "날짜", "LOC": "위치", "POH": "기타", "NOH": "수량"}
+
         if sbj_start_id < obj_start_id:
-            sentence = sentence[:obj_start_id] + f"<O:{obj_type}>" + obj_word + f"</O:{obj_type}>" + sentence[obj_end_id+1:]
-            sentence = sentence[:sbj_start_id] + f"<S:{sbj_type}>" + sbj_word + f"</S:{sbj_type}>" + sentence[sbj_end_id+1:]
+            sentence = sentence[:obj_start_id] + f"@*{trans[obj_type]}*" + obj_word + f"@" + sentence[obj_end_id+1:]
+            sentence = sentence[:sbj_start_id] + f"#^{trans[sbj_type]}^" + sbj_word + f"#" + sentence[sbj_end_id+1:]
         else:
-            sentence = sentence[:sbj_start_id] + f"<S:{sbj_type}>" + sbj_word + f"</S:{sbj_type}>" + sentence[sbj_end_id+1:]
-            sentence = sentence[:obj_start_id] + f"<O:{obj_type}>" + obj_word + f"</O:{obj_type}>" + sentence[obj_end_id+1:]
+            sentence = sentence[:sbj_start_id] + f"#^{trans[sbj_type]}^" + sbj_word + f"#" + sentence[sbj_end_id+1:]
+            sentence = sentence[:obj_start_id] + f"@*{trans[obj_type]}*" + obj_word + f"@" + sentence[obj_end_id+1:]
+
+        sentence = sentence + f'이 문장에서 {sbj_word}는 {obj_word}의 {trans[sbj_type]}이다. 이 때, 이 둘의 관계는'
         
         ## num_labels 값에 따라 라벨 구분
         if num_labels == 2:
@@ -120,7 +122,6 @@ def preprocessing_dataset(dataset, num_labels):
         
     out_dataset = pd.DataFrame({'id': dataset['id'], 'sentence': sentences,
                                'subject_entity': subject_entity, 'object_entity': object_entity, 'label': labels, })
-    
     return out_dataset
 
 

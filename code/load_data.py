@@ -2,6 +2,7 @@ import pickle as pickle
 import pandas as pd
 import torch
 
+from collections import Counter
 from transformers import AutoTokenizer
 from constants import CONFIG
 from sklearn.model_selection import StratifiedShuffleSplit
@@ -22,29 +23,41 @@ class RE_Dataset(torch.utils.data.Dataset):
 
     def __len__(self):
         return len(self.labels)
+    
+def compute_class_num_list(labels):
+    """class별 비율을 리스트를 반환합니다."""
+    counter = Counter(labels)
+    class_num_list = [counter[i] for i in range(max(counter.keys())+1)]
+    total_count = sum(class_num_list)
+    class_num_list = [count / total_count for count in class_num_list]
+    return class_num_list
 
-
-def load_train_dataset(model_name, path, tokenizer_config):
+def load_train_dataset(model_name, path, config):
     """csv 파일을 pytorch dataset으로 불러옵니다."""
 
+     # 전처리 전 split된 데이터를 저장하기
+    if not os.path.exists(os.path.join(config.folder_dir, path.split_data_dir)):
+        os.makedirs(os.path.join(config.folder_dir, path.split_data_dir))
+    
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     # DataFrame로 데이터셋 읽기
-    train_dataset, val_dataset = load_split_data(path)
+    train_dataset, val_dataset = load_split_data(path, config.folder_dir)
 
     # 데이터셋의 label을 불러옴
     train_label = label_to_num(train_dataset["label"].values)
     val_label = label_to_num(val_dataset["label"].values)
 
     # tokenizing dataset
-    tokenized_train = tokenized_dataset(train_dataset, tokenizer, tokenizer_config)
-    tokenized_val = tokenized_dataset(val_dataset, tokenizer, tokenizer_config)
+    tokenized_train = tokenized_dataset(train_dataset, tokenizer, config.tokenizer)
+    tokenized_val = tokenized_dataset(val_dataset, tokenizer, config.tokenizer)
 
     # make dataset for pytorch.
     train_dataset = RE_Dataset(tokenized_train, train_label)
     val_dataset = RE_Dataset(tokenized_val, val_label)
 
-    return train_dataset, val_dataset
+    class_num_list = compute_class_num_list(train_label)
+    return train_dataset, val_dataset, class_num_list
 
 
 def load_test_dataset(dataset_dir, tokenizer, tokenizer_config):
@@ -69,25 +82,50 @@ def label_to_num(label):
 
 
 def preprocessing_dataset(dataset):
-    """처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다."""
+    """ 처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다.
+    type entity_marker
+    원본) 이순신은 조선 전기의 무신이다.
+    적용 후) @*사람*이순신@은 #^날짜^조선# 전기의 무신이다.
+    
+    multi-sentence
+    원본) 이순신은 조선 전기의 무신이다.
+    적용 후) 이순신은 조선 전기의 무신이다. 이 문장에서 조선은 이순신의 날짜이다. 이 때, 이 둘의 관계는
+    """
+
     subject_entity = []
     object_entity = []
-    for i, j in zip(dataset["subject_entity"], dataset["object_entity"]):
-        i = i[1:-1].split(",")[0].split(":")[1]
-        j = j[1:-1].split(",")[0].split(":")[1]
+    sentences = []
+    data_length = len(dataset)
 
-        subject_entity.append(i)
-        object_entity.append(j)
-    out_dataset = pd.DataFrame(
-        {
-            "id": dataset["id"],
-            "sentence": dataset["sentence"],
-            "subject_entity": subject_entity,
-            "object_entity": object_entity,
-            "label": dataset["label"],
-        }
-    )
+    for idx in range(data_length):
+        row = dataset.iloc[idx].to_dict()
+        sentence, sbj_data, obj_data = row["sentence"], eval(row["subject_entity"]), eval(row["object_entity"])
+
+        sbj_word, sbj_start_id, sbj_end_id, sbj_type = sbj_data['word'], sbj_data['start_idx'], sbj_data['end_idx'], sbj_data['type']
+        obj_word, obj_start_id, obj_end_id, obj_type = obj_data['word'], obj_data['start_idx'], obj_data['end_idx'], obj_data['type']
+        
+        trans = {"PER": "사람", "ORG": "단체", "DAT": "날짜", "LOC": "위치", "POH": "기타", "NOH": "수량"}
+
+        if sbj_start_id < obj_start_id:
+            sentence = sentence[:obj_start_id] + f"@*{trans[obj_type]}*" + obj_word + f"@" + sentence[obj_end_id+1:]
+            sentence = sentence[:sbj_start_id] + f"#^{trans[sbj_type]}^" + sbj_word + f"#" + sentence[sbj_end_id+1:]
+        else:
+            sentence = sentence[:sbj_start_id] + f"#^{trans[sbj_type]}^" + sbj_word + f"#" + sentence[sbj_end_id+1:]
+            sentence = sentence[:obj_start_id] + f"@*{trans[obj_type]}*" + obj_word + f"@" + sentence[obj_end_id+1:]
+
+        sentence = sentence + f'이 문장에서 {obj_word}는 {sbj_word}의 {trans[obj_type]}이다. 이 때, 이 둘의 관계는'
+
+
+        subject_entity.append(sbj_word)
+        object_entity.append(obj_word)
+        sentences.append(sentence)
+
+    #breakpoint()
+    out_dataset = pd.DataFrame({'id': dataset['id'], 'sentence': sentences,
+                               'subject_entity': subject_entity, 'object_entity': object_entity, 'label': dataset['label'], })
+
     return out_dataset
+
 
 
 def load_data(dataset_dir):
@@ -98,23 +136,19 @@ def load_data(dataset_dir):
     return dataset
 
 
-def load_split_data(dataset_dir):
+def load_split_data(dataset_dir, save_path):
     """csv 파일을 경로에 맡게 불러 옵니다."""
-    train_data, val_data = split_data(dataset_dir)
+    train_data, val_data = split_data(dataset_dir, save_path)
     train_dataset = preprocessing_dataset(train_data)
     val_dataset = preprocessing_dataset(val_data)
 
-    # 전처리 후 split된 데이터를 저장하기
-    if not os.path.exists(dataset_dir.split_data_dir):
-        os.makedirs(dataset_dir.split_data_dir)
-
-    train_dataset.to_csv(dataset_dir.split_preprocess_train_path, index=False)
-    val_dataset.to_csv(dataset_dir.split_preprocess_val_path, index=False)
+    train_dataset.to_csv(os.path.join(save_path, dataset_dir.split_preprocess_train_path), index=False)
+    val_dataset.to_csv(os.path.join(save_path, dataset_dir.split_preprocess_val_path), index=False)
 
     return train_dataset, val_dataset
 
 
-def split_data(dataset_dir):
+def split_data(dataset_dir, save_path):
     """csv 파일을 불러와서 train과 dev로 split합니다."""
     pd_dataset = pd.read_csv(dataset_dir.train_path)
 
@@ -128,12 +162,8 @@ def split_data(dataset_dir):
     train_data = pd_dataset.loc[train_indices].reset_index(drop=True)
     val_data = pd_dataset.loc[val_indices].reset_index(drop=True)
 
-    # 전처리 전 split된 데이터를 저장하기
-    if not os.path.exists(dataset_dir.split_data_dir):
-        os.makedirs(dataset_dir.split_data_dir)
-
-    train_data.to_csv(dataset_dir.split_nopreprocess_train_path, index=False)
-    val_data.to_csv(dataset_dir.split_nopreprocess_val_path, index=False)
+    train_data.to_csv(os.path.join(save_path, dataset_dir.split_nopreprocess_train_path), index=False)
+    val_data.to_csv(os.path.join(save_path, dataset_dir.split_nopreprocess_val_path), index=False)
 
     return train_data, val_data
 
