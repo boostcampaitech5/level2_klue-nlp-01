@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from transformers import AutoModelForSequenceClassification, RobertaModel, PreTrainedModel, AutoTokenizer
+from transformers import AutoModelForSequenceClassification, RobertaModel, PreTrainedModel, AutoTokenizer, BertPreTrainedModel
 
 class RE_Model(PreTrainedModel):
     """새로운 레이어를 추가하거나, loss fucntion을 수정하는 등, 모델을 커스텀 하기 위한 클래스입니다.
@@ -92,6 +92,7 @@ class CustomModel(PreTrainedModel):
             model_name, num_labels=30)
 
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.loss = nn.CrossEntropyLoss()
 
         # entity special token를 tokenizer에 추가
         special_token_list = []
@@ -102,9 +103,18 @@ class CustomModel(PreTrainedModel):
         self.tokenizer.add_special_tokens({"additional_special_tokens": list(set(special_token_list))})
         
         self.bert.resize_token_embeddings(len(self.tokenizer))
-        self.bert.to(device)
+        # self.init_weights()
+
 
     def forward(self, input_ids, attention_mask, token_type_ids, labels):
-        x = self.bert(input_ids=input_ids, attention_mask=attention_mask,
-                      token_type_ids=token_type_ids, labels=labels)
-        return x
+
+        logits = self.bert(input_ids=input_ids,
+                    attention_mask=attention_mask,
+                    token_type_ids=token_type_ids, 
+                    labels=labels)
+
+        if labels is not None:
+            loss = self.loss(logits, labels)
+            return {"loss": loss, "logits": logits}
+
+        return {"logits": logits}
