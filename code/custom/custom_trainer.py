@@ -159,4 +159,8 @@ class CustomTrainer(Trainer):
 
 
     def training_step(self, model: nn.Module, inputs: Dict[str, Union[torch.Tensor, Any]]) -> torch.Tensor:
-        return super().training_step(model, inputs)
+        # breakpoint()  
+        output = super().training_step(model, inputs)
+        # print(output)
+        # breakpoint()
+        return output
