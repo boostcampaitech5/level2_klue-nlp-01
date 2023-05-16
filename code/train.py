@@ -178,18 +178,10 @@ def custom_train(config, device):
     model_name = config.model_name
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-    # entity special token를 tokenizer에 추가
-    special_token_list = []
-    with open("custom/entity_special_token.txt", "r", encoding="UTF-8") as f:
-        for token in f:
-            special_token_list.append(token.split("\n")[0])
-
-    tokenizer.add_special_tokens({"additional_special_tokens": list(set(special_token_list))})
-
-    ref_labels_id = MINOR_LABEL_IDS[:4]
-    ref_labels_id = sorted(ref_labels_id)
-    ref_sent = [REF_SENT[i] for i in ref_labels_id]
-    ref_input_ids, ref_mask = get_ref_inputids(tokenizer=tokenizer, ref_sent=ref_sent)
+    # ref_labels_id = MINOR_LABEL_IDS[:4]
+    # ref_labels_id = sorted(ref_labels_id)
+    # ref_sent = [REF_SENT[i] for i in ref_labels_id]
+    # ref_input_ids, ref_mask = get_ref_inputids(tokenizer=tokenizer, ref_sent=ref_sent)
 
     # make dataset for pytorch.
     train_dataset, val_dataset = my_load_train_dataset(config["path"], tokenizer, config)
@@ -198,9 +190,10 @@ def custom_train(config, device):
     model_config = AutoConfig.from_pretrained(model_name)
     model_config.num_labels = CONFIG.NUM_LABELS
 
-    model = CustomModel(config=model_config, n_class=30, ref_input_ids=ref_input_ids, ref_mask=ref_mask, hidden_size=768, PRE_TRAINED_MODEL_NAME=model_name)
+    # model = RE_Model(config=model_config, n_class=30, ref_input_ids=ref_input_ids, ref_mask=ref_mask, hidden_size=768, PRE_TRAINED_MODEL_NAME=model_name)
+    model = CustomModel(model_config=model_config, model_name=model_name, device=device)
     # model = AutoModelForSequenceClassification.from_pretrained(model_name, config=model_config)
-    # model.resize_token_embeddings(len(tokenizer))
+
     model.to(device)
     # model.init_weights()
 
@@ -235,6 +228,8 @@ def custom_train(config, device):
             EarlyStoppingCallback(early_stopping_patience=train_config.early_stopping_patience)
         ],
     )
+
+    # breakpoint()
 
     # train model
     trainer.train()

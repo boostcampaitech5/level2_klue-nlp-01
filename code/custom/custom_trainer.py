@@ -3,10 +3,7 @@ import torch
 import numpy as np
 import torch.nn as nn
 from torch.nn import functional as F
-from torch.utils.data import DataLoader
-from transformers import TrainingArguments
-from utils.config import load_config
-
+from typing import Dict, Union, Any
 
 class FocalLoss(nn.Module):
     """ 
@@ -107,3 +104,6 @@ class CustomTrainer(Trainer):
             
         loss = self.loss(logits, labels)
         return (loss, outputs) if return_outputs else loss
+
+    def training_step(self, model: nn.Module, inputs: Dict[str, Union[torch.Tensor, Any]]) -> torch.Tensor:
+        return super().training_step(model, inputs)

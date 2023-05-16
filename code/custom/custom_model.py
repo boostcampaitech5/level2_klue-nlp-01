@@ -1,8 +1,8 @@
 import torch
 from torch import nn
-from transformers import RobertaModel, PreTrainedModel
+from transformers import AutoModelForSequenceClassification, RobertaModel, PreTrainedModel, AutoTokenizer
 
-class CustomModel(PreTrainedModel):
+class RE_Model(PreTrainedModel):
     """새로운 레이어를 추가하거나, loss fucntion을 수정하는 등, 모델을 커스텀 하기 위한 클래스입니다.
     
        pretrain된 모델을 불러올때, 모델마다 무엇을 input해야 하는지 다를 수 있기 때문에, 주의 하셔야 합니다.
@@ -24,7 +24,7 @@ class CustomModel(PreTrainedModel):
 
     def forward(self, input_ids, attention_mask, sub_idx, obj_idx, attn_guide, device):
         """
-        - E1: encoder(input_ids) -> rep.
+        - E1: encoder(input_ids) -> rep.    
         - E2: encoder(reference_sent_ids) -> rep.
         - Q = IN_rep: relu(pool(concat(E1_sub, E1_obj))) -> input sentence rep.
         - K, V: linear_k(E2_cls), linear_v(E2_cls) # vectors for each reference-sentence (each V represent reference-sentence)
@@ -78,3 +78,33 @@ class CustomModel(PreTrainedModel):
         out = self.out(cat) # (bs*2+n_ref, n_class)
         
         return out[:self.batch_n], torch.softmax(out[self.batch_n:-ref_n_class], dim=1), out[-ref_n_class:], attn_score, gating
+
+
+class CustomModel(PreTrainedModel):
+    """새로운 레이어를 추가하거나, loss fucntion을 수정하는 등, 모델을 커스텀 하기 위한 클래스입니다.
+    
+       pretrain된 모델을 불러올때, 모델마다 무엇을 input해야 하는지 다를 수 있기 때문에, 주의 하셔야 합니다.
+    """    
+    def __init__(self, model_config, model_name, device):
+        super().__init__(config=model_config)
+
+        self.bert = AutoModelForSequenceClassification.from_pretrained(
+            model_name, num_labels=30)
+
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+        # entity special token를 tokenizer에 추가
+        special_token_list = []
+        with open("custom/entity_special_token.txt", "r", encoding="UTF-8") as f:
+            for token in f:
+                special_token_list.append(token.split("\n")[0])
+
+        self.tokenizer.add_special_tokens({"additional_special_tokens": list(set(special_token_list))})
+        
+        self.bert.resize_token_embeddings(len(self.tokenizer))
+        self.bert.to(device)
+
+    def forward(self, input_ids, attention_mask, token_type_ids, labels):
+        x = self.bert(input_ids=input_ids, attention_mask=attention_mask,
+                      token_type_ids=token_type_ids, labels=labels)
+        return x
