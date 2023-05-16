@@ -3,7 +3,6 @@ import pandas as pd
 import torch
 from tqdm import tqdm
 
-from transformers import AutoTokenizer
 from constants import CONFIG
 
 
@@ -32,12 +31,14 @@ def my_load_train_dataset(path, tokenizer, config):
     val_dataset = load_data(path.val_path, config)
 
     # 데이터셋의 label을 불러옴
-    train_label = label_to_num(train_dataset['label'].values)
-    val_label = label_to_num(val_dataset['label'].values)
+    # train_label = label_to_num(train_dataset['label'].values)
+    # val_label = label_to_num(val_dataset['label'].values)
+    train_label = train_dataset['label'].values
+    val_label = val_dataset['label'].values
 
     # tokenizing dataset
-    tokenized_train = tokenized_dataset(train_dataset, tokenizer, config)
-    tokenized_val = tokenized_dataset(val_dataset, tokenizer, config)
+    tokenized_train = tokenized_dataset(train_dataset, tokenizer, config.tokenizer)
+    tokenized_val = tokenized_dataset(val_dataset, tokenizer, config.tokenizer)
 
     # make dataset for pytorch.
     train_dataset = RE_Dataset(tokenized_train, train_label)
@@ -48,12 +49,17 @@ def my_load_train_dataset(path, tokenizer, config):
 def load_data(dataset_dir, config):
     """ csv 파일을 경로에 맡게 불러 옵니다. """
     pd_dataset = pd.read_csv(dataset_dir)
-    dataset = preprocessing_dataset(pd_dataset, config.entity_marker_type)
+    dataset = preprocessing_dataset(pd_dataset, config)
 
     return dataset
 
-def preprocessing_dataset(dataset, entity_marker_type):
-    '''
+def preprocessing_dataset(dataset, config):
+    """
+        처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다.
+        
+        dataset의 entity 데이터를 확인해 Type에 따라 special 토큰을 추가합니다.
+        PER(사람), ORG(조직), DAT(시간), LOC(장소), POH(기타 표현), NOH(기타 수량 표현)
+        
         < entity_marker_type >
         "entity_mask" : [SUBJ-PER] ... [OBJ-LOC]
         "entity_marker" : [E1]부덕[/E1] ... [E2]판교[/E2]
@@ -62,12 +68,12 @@ def preprocessing_dataset(dataset, entity_marker_type):
         "typed_entity_marker_punct" : @*PER*부덕@ ... #^LOC^판교#
         "kor_typed_entity_marker" : <S:사람>부덕</S:사람> ... <O:위치>판교</O:위치>
         "kor_typed_entity_marker_punct" : @*사람*부덕@ ... #^위치^판교#
-    '''
-    """ 처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다."""
-
+    """
+    num_labels, entity_marker_type = config.num_labels, config.tokenizer.entity_marker_type
     subject_entity = []
     object_entity = []
     sentences = []
+    labels = []
     data_length = len(dataset)
 
     for idx in range(data_length):
@@ -130,15 +136,38 @@ def preprocessing_dataset(dataset, entity_marker_type):
                 sentence = sentence[:obj_start_id] + f"@*{trans[obj_type]}*" + obj_word + f"@" + sentence[obj_end_id+1:]
 
         # sentence = sentence + f'이 문장에서 {sbj_word}는 {obj_word}의 {trans[sbj_type]}이다. 이 때, 이 둘의 관계는'
-
+        
+        ## num_labels 값에 따라 라벨 구분
+        if num_labels == 2:
+            # relation : 0, no_relation : 1
+            try:
+                if row["label"] == "no_relation":
+                    new_label = 1
+                else:
+                    new_label = 0
+            except AttributeError:
+                new_label = 0
+        elif num_labels == 3:
+            # no_relation : 0, per : 1, org : 2
+            try:
+                if row["label"].startswith("per"):
+                    new_label = 1
+                elif row["label"].startswith("org"):
+                    new_label = 2
+                else:
+                    new_label = 0
+            except AttributeError:
+                new_label = 0
+        else:
+            new_label = row["label"]
 
         subject_entity.append(sbj_word)
         object_entity.append(obj_word)
         sentences.append(sentence)
-
+        labels.append(new_label)
+        
     out_dataset = pd.DataFrame({'id': dataset['id'], 'sentence': sentences,
-                               'subject_entity': subject_entity, 'object_entity': object_entity, 'label': dataset['label'], })
-
+                               'subject_entity': subject_entity, 'object_entity': object_entity, 'label': labels, })
     return out_dataset
 
 def label_to_num(label):
@@ -173,15 +202,15 @@ def tokenized_dataset(dataset, tokenizer, tokenizer_config):
 '''
     #####    Inference     #####
 '''
-def load_test_dataset(dataset_dir, tokenizer, tokenizer_config):
+def my_load_test_dataset(path, tokenizer, config):
     """test dataset을 불러온 후, tokenizing 합니다."""
-    test_dataset = load_data(dataset_dir, tokenizer_config)
+    test_dataset = load_data(dataset_dir, config)
     test_label = list(map(int, test_dataset['label'].values))
 
     # tokenizing dataset
     tokenized_test = tokenized_dataset(
         test_dataset, tokenizer, tokenizer_config)
-    return test_dataset['id'], tokenized_test, test_label
+    return test_dataset['id'], test_dataset['sentence'], tokenized_test, test_label
 
 
 def num_to_label(label):

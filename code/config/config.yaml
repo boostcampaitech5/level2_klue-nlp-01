@@ -1,6 +1,7 @@
 seed: 42
 model_name: "klue/bert-base"
 batch_size: 64
+num_labels : 3
 
 train:
   output_dir: "./results"
@@ -10,7 +11,7 @@ train:
   logging_steps: 100
   evaluation_strategy: "epoch"
   load_best_model_at_end: True
-  num_train_epochs: 2
+  num_train_epochs: 20
   learning_rate: 5e-5
   warmup_steps: 100
   weight_decay: 0.01
@@ -48,3 +49,4 @@ path:
   split_nopreprocess_val_path: "split_data/split_nopreprocess_val.csv"
   split_preprocess_train_path: "split_data/split_preprocess_train.csv"
   split_preprocess_val_path: "split_data/split_preprocess_val.csv"
+  
