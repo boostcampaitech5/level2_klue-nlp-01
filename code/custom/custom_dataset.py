@@ -101,20 +101,22 @@ class RE_Dataset(torch.utils.data.Dataset):
         return torch.Tensor(subject_entity_mask), torch.Tensor(object_entity_mask)
 
 
-def my_load_train_dataset(path, tokenizer, tokenizer_config):
+def my_load_train_dataset(path, tokenizer, config):
     """ csv 파일을 pytorch dataset으로 불러옵니다."""
 
     # DataFrame로 데이터셋 읽기
-    train_dataset = load_data(path.train_path)
-    val_dataset = load_data(path.val_path)
+    train_dataset = load_data(path.train_path, config)
+    val_dataset = load_data(path.val_path, config)
 
     # 데이터셋의 label을 불러옴
-    train_label = label_to_num(train_dataset['label'].values)
-    val_label = label_to_num(val_dataset['label'].values)
+    # train_label = label_to_num(train_dataset['label'].values)
+    # val_label = label_to_num(val_dataset['label'].values)
+    train_label = train_dataset['label'].values
+    val_label = val_dataset['label'].values
 
     # tokenizing dataset
-    tokenized_train = tokenized_dataset(train_dataset, tokenizer, tokenizer_config)
-    tokenized_val = tokenized_dataset(val_dataset, tokenizer, tokenizer_config)
+    tokenized_train = tokenized_dataset(train_dataset, tokenizer, config.tokenizer)
+    tokenized_val = tokenized_dataset(val_dataset, tokenizer, config.tokenizer)
 
     # make dataset for pytorch.
     train_dataset = RE_Dataset(train_dataset, tokenized_train, train_label, tokenizer)
@@ -122,6 +124,135 @@ def my_load_train_dataset(path, tokenizer, tokenizer_config):
 
     return train_dataset, val_dataset
 
+def load_data(dataset_dir, config):
+    """ csv 파일을 경로에 맡게 불러 옵니다. """
+    pd_dataset = pd.read_csv(dataset_dir)
+    dataset = preprocessing_dataset(pd_dataset, config)
+
+    return dataset
+
+def preprocessing_dataset(dataset, config):
+    """
+        처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다.
+        
+        dataset의 entity 데이터를 확인해 Type에 따라 special 토큰을 추가합니다.
+        PER(사람), ORG(조직), DAT(시간), LOC(장소), POH(기타 표현), NOH(기타 수량 표현)
+        
+        < entity_marker_type >
+        "entity_mask" : [SUBJ-PER] ... [OBJ-LOC]
+        "entity_marker" : [E1]부덕[/E1] ... [E2]판교[/E2]
+        "entity_marker_punct" : @부덕@ ... #판교#
+        "typed_entity_marker" : <S:PER>부덕</S:PER> ... <O:LOC>판교</O:LOC>
+        "typed_entity_marker_punct" : @*PER*부덕@ ... #^LOC^판교#
+        "kor_typed_entity_marker" : <S:사람>부덕</S:사람> ... <O:위치>판교</O:위치>
+        "kor_typed_entity_marker_punct" : @*사람*부덕@ ... #^위치^판교#
+    """
+    num_labels, entity_marker_type = config.num_labels, config.tokenizer.entity_marker_type
+    subject_entity = []
+    object_entity = []
+    subject_entity_token = []
+    object_entity_token = []
+    sentences = []
+    labels = []
+    data_length = len(dataset)
+
+    for idx in tqdm(range(data_length)):
+        row = dataset.iloc[idx].to_dict()
+        sentence, sbj_data, obj_data = row["sentence"], eval(row["subject_entity"]), eval(row["object_entity"])
+
+        sbj_word, sbj_start_id, sbj_end_id, sbj_type = sbj_data['word'], sbj_data['start_idx'], sbj_data['end_idx'], sbj_data['type']
+        obj_word, obj_start_id, obj_end_id, obj_type = obj_data['word'], obj_data['start_idx'], obj_data['end_idx'], obj_data['type']
+        
+        trans = {"PER": "사람", "ORG": "단체", "DAT": "날짜", "LOC": "위치", "POH": "기타", "NOH": "수량"}
+
+        if entity_marker_type == "entity_mask":
+            if sbj_start_id < obj_start_id:
+                sentence = sentence[:obj_start_id] + f"[OBJ-{obj_type}]" + sentence[obj_end_id+1:]
+                sentence = sentence[:sbj_start_id] + f"[SUBJ-{sbj_type}]" + sentence[sbj_end_id+1:]
+            else:
+                sentence = sentence[:sbj_start_id] + f"[SUBJ-{sbj_type}]" + sentence[sbj_end_id+1:]
+                sentence = sentence[:obj_start_id] + f"[OBJ-{obj_type}]" + sentence[obj_end_id+1:]
+        elif entity_marker_type == "entity_marker":
+            if sbj_start_id < obj_start_id:
+                sentence = sentence[:obj_start_id] + f"[E2]{obj_word}[/E2]" + sentence[obj_end_id+1:]
+                sentence = sentence[:sbj_start_id] + f"[E1]{sbj_word}[/E1]" + sentence[sbj_end_id+1:]
+            else:
+                sentence = sentence[:sbj_start_id] + f"[E1]{sbj_word}[/E1]" + sentence[sbj_end_id+1:]
+                sentence = sentence[:obj_start_id] + f"[E2]{obj_word}[/E2]" + sentence[obj_end_id+1:]
+        elif entity_marker_type == "entity_marker_punct":
+            if sbj_start_id < obj_start_id:
+                sentence = sentence[:obj_start_id] + f"#{obj_word}#" + sentence[obj_end_id+1:]
+                sentence = sentence[:sbj_start_id] + f"@{sbj_word}@" + sentence[sbj_end_id+1:]
+            else:
+                sentence = sentence[:sbj_start_id] + f"@{sbj_word}@" + sentence[sbj_end_id+1:]
+                sentence = sentence[:obj_start_id] + f"#{obj_word}#" + sentence[obj_end_id+1:]
+        elif entity_marker_type == "typed_entity_marker":
+            if sbj_start_id < obj_start_id:
+                sentence = sentence[:obj_start_id] + f"<O:{obj_type}>{obj_word}</O:{obj_type}>" + sentence[obj_end_id+1:]
+                sentence = sentence[:sbj_start_id] + f"<S:{sbj_type}>{sbj_word}</S:{sbj_type}>" + sentence[sbj_end_id+1:]
+            else:
+                sentence = sentence[:sbj_start_id] + f"<S:{sbj_type}>{sbj_word}</S:{sbj_type}>" + sentence[sbj_end_id+1:]
+                sentence = sentence[:obj_start_id] + f"<O:{obj_type}>{obj_word}</O:{obj_type}>" + sentence[obj_end_id+1:]
+        elif entity_marker_type == "typed_entity_marker_punct":
+            if sbj_start_id < obj_start_id:
+                sentence = sentence[:obj_start_id] + f"@*{obj_type}*" + obj_word + f"@" + sentence[obj_end_id+1:]
+                sentence = sentence[:sbj_start_id] + f"#^{sbj_type}^" + sbj_word + f"#" + sentence[sbj_end_id+1:]
+            else:
+                sentence = sentence[:sbj_start_id] + f"#^{sbj_type}^" + sbj_word + f"#" + sentence[sbj_end_id+1:]
+                sentence = sentence[:obj_start_id] + f"@*{obj_type}*" + obj_word + f"@" + sentence[obj_end_id+1:]
+        elif entity_marker_type == "kor_typed_entity_marker":
+            if sbj_start_id < obj_start_id:
+                sentence = sentence[:obj_start_id] + f"<O:{trans[obj_type]}>{obj_word}</O:{trans[obj_type]}>" + sentence[obj_end_id+1:]
+                sentence = sentence[:sbj_start_id] + f"<S:{trans[sbj_type]}>{sbj_word}</S:{trans[sbj_type]}>" + sentence[sbj_end_id+1:]
+            else:
+                sentence = sentence[:sbj_start_id] + f"<S:{trans[sbj_type]}>{sbj_word}</S:{trans[sbj_type]}>" + sentence[sbj_end_id+1:]
+                sentence = sentence[:obj_start_id] + f"<O:{trans[obj_type]}>{obj_word}</O:{trans[obj_type]}>" + sentence[obj_end_id+1:]
+        elif entity_marker_type == "kor_typed_entity_marker_punct":
+            if sbj_start_id < obj_start_id:
+                sentence = sentence[:obj_start_id] + f"@*{trans[obj_type]}*" + obj_word + f"@" + sentence[obj_end_id+1:]
+                sentence = sentence[:sbj_start_id] + f"#^{trans[sbj_type]}^" + sbj_word + f"#" + sentence[sbj_end_id+1:]
+            else:
+                sentence = sentence[:sbj_start_id] + f"#^{trans[sbj_type]}^" + sbj_word + f"#" + sentence[sbj_end_id+1:]
+                sentence = sentence[:obj_start_id] + f"@*{trans[obj_type]}*" + obj_word + f"@" + sentence[obj_end_id+1:]
+
+        # sentence = sentence + f'이 문장에서 {sbj_word}는 {obj_word}의 {trans[sbj_type]}이다. 이 때, 이 둘의 관계는'
+        
+        ## num_labels 값에 따라 라벨 구분
+        if num_labels == 2:
+            # relation : 0, no_relation : 1
+            try:
+                if row["label"] == "no_relation":
+                    new_label = 1
+                else:
+                    new_label = 0
+            except AttributeError:
+                new_label = 0
+        elif num_labels == 3:
+            # no_relation : 0, per : 1, org : 2
+            try:
+                if row["label"].startswith("per"):
+                    new_label = 1
+                elif row["label"].startswith("org"):
+                    new_label = 2
+                else:
+                    new_label = 0
+            except AttributeError:
+                new_label = 0
+        else:
+            new_label = row["label"]
+
+        subject_entity.append(sbj_word)
+        object_entity.append(obj_word)
+        sentences.append(sentence)
+        subject_entity_token.append(f"<S:{sbj_type}>" + sbj_word + f"</S:{sbj_type}>")
+        object_entity_token.append(f"<O:{obj_type}>" + obj_word + f"</O:{obj_type}>")
+        labels.append(new_label)
+        
+    out_dataset = pd.DataFrame({'id': dataset['id'], 'sentence': sentences,
+                               'subject_entity': subject_entity, 'object_entity': object_entity,
+                               'subject_entity_token': subject_entity_token, 'object_entity_token': object_entity_token,
+                               'label': labels, })
+    return out_dataset
 
 def label_to_num(label):
     """lable을 pickle에 저장된 dict에 따라 int로 변환합니다."""
@@ -132,61 +263,6 @@ def label_to_num(label):
         num_label.append(dict_label_to_num[v])
 
     return num_label
-
-
-def preprocessing_dataset(dataset):
-    """
-        처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다.
-        
-        dataset의 entity 데이터를 확인해 Type에 따라 special 토큰을 추가합니다.
-        # PER(사람), ORG(조직), DAT(시간), LOC(장소), POH(기타 표현), NOH(기타 수량 표현)
-        
-        ex) 이 돈가스집은 <O:PER>백종원</O:PER> <S:ORG>더본코리아</S:ORG> 대표 ...
-    """
-    
-    subject_entity = []
-    object_entity = []
-    subject_entity_token = []
-    object_entity_token = []
-    sentences = []
-    data_length = len(dataset)
-    
-    for idx in tqdm(range(data_length)):
-        row = dataset.iloc[idx].to_dict()
-        sentence, sbj_data, obj_data = row["sentence"], eval(row["subject_entity"]), eval(row["object_entity"])
-        
-        sbj_word, sbj_start_id, sbj_end_id, sbj_type = sbj_data['word'], sbj_data['start_idx'], sbj_data['end_idx'], sbj_data['type']
-        obj_word, obj_start_id, obj_end_id, obj_type = obj_data['word'], obj_data['start_idx'], obj_data['end_idx'], obj_data['type']
-        
-        # entity의 위치에 따라 토큰을 추가하는 순서를 다르게 합니다.
-        if sbj_start_id < obj_start_id:
-            sentence = sentence[:obj_start_id] + f"<O:{obj_type}>" + obj_word + f"</O:{obj_type}>" + sentence[obj_end_id+1:]
-            sentence = sentence[:sbj_start_id] + f"<S:{sbj_type}>" + sbj_word + f"</S:{sbj_type}>" + sentence[sbj_end_id+1:]
-        else:
-            sentence = sentence[:sbj_start_id] + f"<S:{sbj_type}>" + sbj_word + f"</S:{sbj_type}>" + sentence[sbj_end_id+1:]
-            sentence = sentence[:obj_start_id] + f"<O:{obj_type}>" + obj_word + f"</O:{obj_type}>" + sentence[obj_end_id+1:]
-
-        subject_entity.append(sbj_word)
-        object_entity.append(obj_word)
-        sentences.append(sentence)
-        subject_entity_token.append(f"<S:{sbj_type}>" + sbj_word + f"</S:{sbj_type}>")
-        object_entity_token.append(f"<O:{obj_type}>" + obj_word + f"</O:{obj_type}>")
-        
-    out_dataset = pd.DataFrame({'id': dataset['id'], 'sentence': sentences,
-                               'subject_entity': subject_entity, 'object_entity': object_entity,
-                               'subject_entity_token': subject_entity_token, 'object_entity_token': object_entity_token,
-                               'label': dataset['label'], })
-    
-    return out_dataset
-
-
-def load_data(dataset_dir):
-    """ csv 파일을 경로에 맡게 불러 옵니다. """
-    pd_dataset = pd.read_csv(dataset_dir)
-    dataset = preprocessing_dataset(pd_dataset)
-
-    return dataset
-
 
 def tokenized_dataset(dataset, tokenizer, tokenizer_config):
     """ tokenizer에 따라 sentence를 tokenizing 합니다."""
@@ -210,14 +286,14 @@ def tokenized_dataset(dataset, tokenizer, tokenizer_config):
 '''
     #####    Inference     #####
 '''
-def my_load_test_dataset(dataset_dir, tokenizer, tokenizer_config):
+def my_load_test_dataset(path, tokenizer, config):
     """test dataset을 불러온 후, tokenizing 합니다."""
-    test_dataset = load_data(dataset_dir)
+    test_dataset = load_data(path, config)
     test_label = list(map(int, test_dataset['label'].values))
 
     # tokenizing dataset
     tokenized_test = tokenized_dataset(
-        test_dataset, tokenizer, tokenizer_config)
+        test_dataset, tokenizer, config.tokenizer)
     return test_dataset, tokenized_test, test_label
 
 
