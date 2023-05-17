@@ -11,7 +11,7 @@ train:
   logging_steps: 100
   evaluation_strategy: "epoch"
   load_best_model_at_end: True
-  num_train_epochs: 2
+  num_train_epochs: 1
   learning_rate: 5e-5
   warmup_steps: 100
   weight_decay: 0.01
