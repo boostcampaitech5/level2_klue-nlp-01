@@ -4,7 +4,6 @@ import torch
 from tqdm import tqdm
 import numpy as np
 
-from transformers import AutoTokenizer
 from constants import CONFIG
 
 
@@ -211,7 +210,7 @@ def tokenized_dataset(dataset, tokenizer, tokenizer_config):
 '''
     #####    Inference     #####
 '''
-def load_test_dataset(dataset_dir, tokenizer, tokenizer_config):
+def my_load_test_dataset(dataset_dir, tokenizer, tokenizer_config):
     """test dataset을 불러온 후, tokenizing 합니다."""
     test_dataset = load_data(dataset_dir)
     test_label = list(map(int, test_dataset['label'].values))
@@ -219,7 +218,7 @@ def load_test_dataset(dataset_dir, tokenizer, tokenizer_config):
     # tokenizing dataset
     tokenized_test = tokenized_dataset(
         test_dataset, tokenizer, tokenizer_config)
-    return test_dataset['id'], tokenized_test, test_label
+    return test_dataset, tokenized_test, test_label
 
 
 def num_to_label(label):
