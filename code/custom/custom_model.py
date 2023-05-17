@@ -1,9 +1,11 @@
+import os
 import torch
+import json
 from torch import nn
 import torch.nn as nn
 from transformers import AutoModel, AutoConfig, AutoTokenizer
 
-from transformers import AutoModelForSequenceClassification, PreTrainedModel
+from transformers import AutoModelForSequenceClassification, PreTrainedModel, BertPreTrainedModel
 
 class CustomModel(PreTrainedModel):
     """새로운 레이어를 추가하거나, loss fucntion을 수정하는 등, 모델을 커스텀 하기 위한 클래스입니다.
@@ -38,7 +40,6 @@ class FCLayer(nn.Module):
 
 class RBERT(nn.Module):
     """R-BERT: https://github.com/monologg/R-BERT/blob/master/model.py"""
-
     def __init__(self,
                  model_name: str = "klue/bert-base",
                  num_labels: int = 30,
