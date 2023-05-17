@@ -130,8 +130,8 @@ def custom_inference(config, device):
 
     # test 데이터셋 호출
     test_dataset_dir = config.path.test_path
-    test_id, test_dataset, test_label = load_test_dataset(test_dataset_dir, tokenizer, config.tokenizer)
-    Re_test_dataset = RE_Dataset(test_dataset, test_label)
+    test_data, test_dataset, test_label = my_load_test_dataset(test_dataset_dir, tokenizer, config.tokenizer)
+    Re_test_dataset = RE_Dataset(test_data, test_dataset, test_label, tokenizer)
 
     # 정답 예측
     pred_answer, output_prob = test(model, Re_test_dataset, device, config)  # model에서 class 추론
