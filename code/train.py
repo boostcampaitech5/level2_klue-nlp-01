@@ -160,7 +160,7 @@ def custom_train(config, device):
     # make dataset for pytorch.
     train_dataset, val_dataset = my_load_train_dataset(config['path'], tokenizer, config.tokenizer)
 
-    model = RBERT(model_name = config.model_name, tokenizer = tokenizer)
+    model = RBERT(model_name = config.model_name, special_tokens_dict=special_token_list, tokenizer = tokenizer)
     # setting model hyperparameter
     # model_config = AutoConfig.from_pretrained(model_name)
     # model_config.num_labels = CONFIG.NUM_LABELS
