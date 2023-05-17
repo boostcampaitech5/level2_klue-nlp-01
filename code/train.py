@@ -2,6 +2,8 @@ import pickle as pickle
 import sklearn
 import numpy as np
 import torch
+import shutil
+import os
 
 from sklearn.metrics import accuracy_score
 from transformers import (
@@ -18,6 +20,7 @@ from custom.custom_trainer import CustomTrainer
 from custom.custom_dataset import my_load_train_dataset
 from constants import CONFIG
 
+NUM_LABELS = 30
 
 class DropoutCallback(TrainerCallback):
     def __init__(self, model, config) -> None:
@@ -70,15 +73,16 @@ def klue_re_micro_f1(preds, labels):
     no_relation_label_idx = label_list.index("no_relation")
     label_indices = list(range(len(label_list)))
     label_indices.remove(no_relation_label_idx)
+    
     return sklearn.metrics.f1_score(labels, preds, average="micro", labels=label_indices) * 100.0
 
 
 def klue_re_auprc(probs, labels):
     """KLUE-RE AUPRC (with no_relation)"""
-    labels = np.eye(30)[labels]
+    labels = np.eye(NUM_LABELS)[labels]
 
-    score = np.zeros((30,))
-    for c in range(30):
+    score = np.zeros((NUM_LABELS,))
+    for c in range(NUM_LABELS):
         targets_c = labels.take([c], axis=1).ravel()
         preds_c = probs.take([c], axis=1).ravel()
         precision, recall, _ = sklearn.metrics.precision_recall_curve(targets_c, preds_c)
@@ -121,7 +125,9 @@ def base_train(config, device):
     model_name = config.model_name
 
     # make dataset for pytorch.
-    train_dataset, val_dataset, class_num_list = load_train_dataset(model_name, config['path'], config)
+    train_dataset, val_dataset, class_num_list = load_train_dataset(
+        model_name, config["path"], config
+    )
 
     # setting model hyperparameter
     model_config = AutoConfig.from_pretrained(model_name)
@@ -152,6 +158,7 @@ def base_train(config, device):
         weight_decay=train_config.weight_decay,
         metric_for_best_model=train_config.metric_for_best_model,
         greater_is_better=train_config.greater_is_better,
+        fp16=True,
     )
 
     trainer = CustomTrainer(
@@ -177,6 +184,7 @@ def base_train(config, device):
     # train model
     trainer.train()
     model.save_pretrained(config.folder_dir + CONFIG.OUTPUT_PATH)
+    shutil.copyfile(CONFIG.CONFIG_PATH, os.path.join(config.folder_dir, CONFIG.CONFIG_NAME))
 
 
 def custom_train(config, device):
@@ -191,7 +199,8 @@ def custom_train(config, device):
     """
     train_config = config.train
     loss_config = config.loss
-
+    NUM_LABELS  = config.num_labels
+    
     # model_name 및 tokenizer 호출
     model_name = config.model_name
     tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -205,7 +214,7 @@ def custom_train(config, device):
     tokenizer.add_special_tokens({"additional_special_tokens": list(set(special_token_list))})
 
     # make dataset for pytorch.
-    train_dataset, val_dataset = my_load_train_dataset(config["path"], tokenizer, config)
+    train_dataset, val_dataset = my_load_train_dataset(config['path'], tokenizer, config, NUM_LABELS)
 
     # setting model hyperparameter
     model_config = AutoConfig.from_pretrained(model_name)
@@ -242,6 +251,7 @@ def custom_train(config, device):
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
         compute_metrics=compute_metrics,
+        loss_type=loss_config.loss_type,
         device=device,
         callbacks=[
             EarlyStoppingCallback(early_stopping_patience=train_config.early_stopping_patience)
@@ -251,3 +261,4 @@ def custom_train(config, device):
     # train model
     trainer.train()
     model.save_pretrained(config.folder_dir + CONFIG.OUTPUT_PATH)
+    shutil.copyfile(CONFIG.CONFIG_PATH, os.path.join(config.folder_dir+".", CONFIG.CONFIG_NAME))
