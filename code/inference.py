@@ -123,9 +123,10 @@ def custom_inference(config, device):
         inference_dir = config.inference_file
     
     # 모델 불러오기
-    model_dir = f"./logs/{inference_dir}/best_model"
-    model = AutoModelForSequenceClassification.from_pretrained(model_dir)
-    model.resize_token_embeddings(len(tokenizer))
+    model_dir = f"./logs/{inference_dir}/best_model"    
+    model = RBERT(model_name = config.model_name, special_tokens_dict=special_token_list, tokenizer = tokenizer)
+    model.load_state_dict(torch.load(os.path.join(model_dir, "pytorch_model.bin")))
+    model.plm.resize_token_embeddings(len(tokenizer))
     model.to(device)
 
     # test 데이터셋 호출
