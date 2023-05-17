@@ -24,21 +24,23 @@ def test(model, tokenized_sent, device, config):
     output_pred = []
     output_prob = []
     for i, data in enumerate(tqdm(dataloader)):
-        with torch.no_grad():
+        with torch.no_grad():            
             outputs = model(
-                input_ids=data['input_ids'].to(device),
-                attention_mask=data['attention_mask'].to(device),
-                token_type_ids=data['token_type_ids'].to(device)
+                input_ids=data["input_ids"].to(device),
+                attention_mask=data["attention_mask"].to(device),
+                subject_mask=data["subject_mask"].to(device),
+                object_mask=data["object_mask"].to(device),
             )
-        logits = outputs[0]
+        
+        logits = outputs
         prob = F.softmax(logits, dim=-1).detach().cpu().numpy()
         logits = logits.detach().cpu().numpy()
         result = np.argmax(logits, axis=-1)
 
-        output_pred.append(result)
-        output_prob.append(prob)
-
-    return np.concatenate(output_pred).tolist(), np.concatenate(output_prob, axis=0).tolist()
+        output_pred.extend(result)
+        output_prob.extend([f"[{', '.join(map(str,s))}]" for s in prob])
+        
+    return output_pred, output_prob
 
 def base_inference(config, device):
     """
