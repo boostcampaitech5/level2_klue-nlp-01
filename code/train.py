@@ -187,7 +187,7 @@ def custom_train(config, device):
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     # entity special token를 tokenizer에 추가
-    special_token_list = ['@', '#']
+    special_token_list = ['@', '#'] if config.tokenizer.entity_marker_type not in ["entity_marker", "entity_mask", "typed_entity_marker"] else []
     with open("custom/entity_special_token.txt", "r", encoding="UTF-8") as f:
         for token in f:
             special_token_list.append(token.split("\n")[0])
