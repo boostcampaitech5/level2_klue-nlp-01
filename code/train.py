@@ -143,7 +143,6 @@ def base_train(config, device):
     training_args = TrainingArguments(
         report_to=CONFIG.WANDB,
         seed=config.seed,
-        data_seed=42,
         output_dir=train_config.output_dir,
         save_total_limit=train_config.save_total_limit,
         save_strategy=train_config.save_strategy,
