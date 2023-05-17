@@ -194,17 +194,17 @@ def tokenized_dataset(dataset, tokenizer, tokenizer_config):
     for e01, e02 in zip(dataset['subject_entity'], dataset['object_entity']):
         temp = e01 + '[SEP]' + e02
         concat_entity.append(temp)
-        
+    
     tokenized_sentences = tokenizer(
         concat_entity,
         list(dataset['sentence']),
         return_tensors=tokenizer_config.return_tensors,
-        padding=tokenizer_config.padding,
-        truncation=tokenizer_config.truncation,
-        max_length=tokenizer_config.max_length,
+        padding = "max_length",           # "max_length"
+        truncation=tokenizer_config.truncation,     # True
+        max_length=tokenizer_config.max_length,     # 256
         add_special_tokens=tokenizer_config.add_special_tokens
     )
-
+    
     return tokenized_sentences
 
 '''
