@@ -141,7 +141,7 @@ def custom_inference(config, device):
     # 예측된 정답을 DataFrame으로 저장
     #########################################################
     # 아래 directory와 columns의 형태는 지켜주시기 바랍니다.
-    output = pd.DataFrame({'id': test_id, 'pred_label': pred_answer, 'probs': output_prob, })
+    output = pd.DataFrame({'id': test_data['id'], 'pred_label': pred_answer, 'probs': output_prob, })
 
     # prediction 폴더 존재 확인
     if not os.path.exists(CONFIG.PREDICTTION_PATH):
