@@ -23,13 +23,13 @@ loss:
 
 tokenizer:
     return_tensors: "pt"
-    padding: True
+    padding: "max_length"
     truncation: True
     max_length: 256
     add_special_tokens: True
 
 inference:
-  model_dir: "./best_model"
+  model_dir: "/best_model"
   output_dir: "./prediction"
   output_file: "submission.csv"
 
