@@ -197,16 +197,23 @@ def custom_train(config, device):
         model_name, config["path"], config
     )
 
+    # entity special token를 tokenizer에 추가
+    special_token_list = []
+    with open("custom/entity_special_token.txt", "r", encoding="UTF-8") as f:
+        for token in f:
+            special_token_list.append(token.split("\n")[0])
+
+    tokenizer.add_special_tokens({"additional_special_tokens": list(set(special_token_list))})
 
     # setting model hyperparameter
     model_config = AutoConfig.from_pretrained(model_name)
     model_config.num_labels = CONFIG.NUM_LABELS
 
     # model = RE_Model(config=model_config, n_class=30, ref_input_ids=ref_input_ids, ref_mask=ref_mask, hidden_size=768, PRE_TRAINED_MODEL_NAME=model_name)
-    model = CustomModel(model_config=model_config, model_name=model_name, device=device)
-
+    model = CustomModel(model_name, config=model_config)
+    # model.resize_token_embeddings(len(tokenizer))
+    model.init_weights()
     model.to(device)
-    # model.init_weights()
 
     training_args = TrainingArguments(
         report_to=CONFIG.WANDB,
@@ -252,4 +259,5 @@ def custom_train(config, device):
     # train model
     trainer.train()
     model.save_pretrained(config.folder_dir + CONFIG.OUTPUT_PATH)
-    shutil.copyfile(CONFIG.CONFIG_PATH, os.path.join(config.folder_dir+".", CONFIG.CONFIG_NAME))
+    # torch.save(model, config.folder_dir + "/pytorch_model.pt")
+    shutil.copyfile(CONFIG.CONFIG_PATH, os.path.join(config.folder_dir, CONFIG.CONFIG_NAME))

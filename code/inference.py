@@ -1,7 +1,8 @@
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, AutoConfig
 from torch.utils.data import DataLoader
 from load_data import *
 import custom.custom_dataset as custom # custom dataset 사용
+from custom.custom_model import CustomModel
 
 import os
 import pandas as pd
@@ -121,11 +122,11 @@ def custom_inference(config, device):
     else:
         last_log = sorted(os.listdir(CONFIG.LOGDIR_PATH))[-1]
         inference_dir = last_log
-    
+
     # 모델 불러오기
     model_dir = f"./logs/{inference_dir}/best_model"
-    model = AutoModelForSequenceClassification.from_pretrained(model_dir)
-    model.resize_token_embeddings(len(tokenizer))
+    model_config = AutoConfig.from_pretrained(model_dir)
+    model = CustomModel.from_pretrained(model_dir, model_config)
     model.to(device)
     
     # prediction 폴더 존재 확인
@@ -267,7 +268,8 @@ def custom_val_inference(config, device):
 
     # 모델 불러오기
     model_dir = f"./logs/{inference_dir}/best_model"
-    model = AutoModelForSequenceClassification.from_pretrained(model_dir)
+    model_config = AutoConfig.from_pretrained(model_dir)
+    model = CustomModel.from_pretrained(model_dir, model_config)
     model.to(device)
 
     ## 변경필요

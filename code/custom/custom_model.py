@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from transformers import AutoModelForSequenceClassification, RobertaModel, PreTrainedModel, AutoTokenizer, BertPreTrainedModel
+from transformers import AutoModelForSequenceClassification, RobertaModel, PreTrainedModel, AutoTokenizer, RobertaForSequenceClassification, RobertaPreTrainedModel
 
 class RE_Model(PreTrainedModel):
     """새로운 레이어를 추가하거나, loss fucntion을 수정하는 등, 모델을 커스텀 하기 위한 클래스입니다.
@@ -80,41 +80,32 @@ class RE_Model(PreTrainedModel):
         return out[:self.batch_n], torch.softmax(out[self.batch_n:-ref_n_class], dim=1), out[-ref_n_class:], attn_score, gating
 
 
-class CustomModel(PreTrainedModel):
+class CustomModel(RobertaPreTrainedModel):
     """새로운 레이어를 추가하거나, loss fucntion을 수정하는 등, 모델을 커스텀 하기 위한 클래스입니다.
     
        pretrain된 모델을 불러올때, 모델마다 무엇을 input해야 하는지 다를 수 있기 때문에, 주의 하셔야 합니다.
     """    
-    def __init__(self, model_config, model_name, device):
-        super().__init__(config=model_config)
+    def __init__(self, model_name, config):
+        super().__init__(config=config)
 
-        self.bert = AutoModelForSequenceClassification.from_pretrained(
-            model_name, num_labels=30)
-
+        self.model = RobertaForSequenceClassification.from_pretrained(model_name, num_labels=30)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.loss = nn.CrossEntropyLoss()
-
+        
         # entity special token를 tokenizer에 추가
-        special_token_list = []
+        self.special_token_list = []
         with open("custom/entity_special_token.txt", "r", encoding="UTF-8") as f:
             for token in f:
-                special_token_list.append(token.split("\n")[0])
+                self.special_token_list.append(token.split("\n")[0])
 
-        self.tokenizer.add_special_tokens({"additional_special_tokens": list(set(special_token_list))})
+        self.tokenizer.add_special_tokens(
+            {"additional_special_tokens": list(set(self.special_token_list))}
+        )
+
+        self.model.resize_token_embeddings(len(self.tokenizer))
+        self.model.init_weights()
         
-        self.bert.resize_token_embeddings(len(self.tokenizer))
-        # self.init_weights()
-
-
     def forward(self, input_ids, attention_mask, token_type_ids, labels):
-
-        logits = self.bert(input_ids=input_ids,
-                    attention_mask=attention_mask,
-                    token_type_ids=token_type_ids, 
-                    labels=labels)
-        # breakpoint()
-        # if labels is not None:
-        #     loss = self.loss(logits, labels)
-        #     return {"loss": loss, "logits": logits}
-
-        return logits
+        x = self.model(input_ids=input_ids, attention_mask=attention_mask,
+                      token_type_ids=token_type_ids, labels=labels)
+                      
+        return x
