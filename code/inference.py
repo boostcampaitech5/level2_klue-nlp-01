@@ -138,7 +138,7 @@ def custom_inference(config, device):
     
     ####################################### dev #######################################
     # dev 데이터로 결과 눈으로 확인해보기
-    dev_data, dev_dataset, dev_label = my_load_test_dataset(config.path.val_path, tokenizer, config.tokenizer, NUM_LABELS)
+    dev_data, dev_dataset, dev_label = my_load_test_dataset(config.path.val_path, tokenizer, config, NUM_LABELS)
     dev_dataset = RE_Dataset(dev_dataset, dev_label)
     pred_answer, output_prob = test(model, dev_dataset, device, config)  # model에서 class 추론
     output = pd.DataFrame({'id': dev_data['id'], 'sentence' : dev_data['sentence'], 'label' : dev_label, 'pred_label': pred_answer, 'probs': output_prob, })
@@ -154,11 +154,11 @@ def custom_inference(config, device):
     ####################################### Test #######################################
     # test 데이터셋 호출
     test_dataset_dir = config.path.test_path
-    test_data, test_dataset, test_label = my_load_test_dataset(test_dataset_dir, tokenizer, config.tokenizer, NUM_LABELS)
+    test_data, test_dataset, test_label = my_load_test_dataset(test_dataset_dir, tokenizer, config, NUM_LABELS)
     Re_test_dataset = RE_Dataset(test_data, test_dataset, test_label, tokenizer)
 
     # 정답 예측
-    pred_answer, output_prob = test(model, test_dataset, device, config)  # model에서 class 추론
+    pred_answer, output_prob = test(model, Re_test_dataset, device, config)  # model에서 class 추론
     # pred_answer = num_to_label(pred_answer)  # 숫자로 된 class를 원래 문자열 라벨로 변환.
 
     # 예측된 정답을 DataFrame으로 저장
