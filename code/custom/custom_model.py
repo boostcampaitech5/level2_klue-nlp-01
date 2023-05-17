@@ -51,20 +51,20 @@ class RBERT(nn.Module):
 
         self.model_name = model_name
         self.tokenizer = tokenizer if tokenizer != None else AutoTokenizer.from_pretrained(model_name)
-        config = AutoConfig.from_pretrained(model_name)
-        self.plm = AutoModel.from_pretrained(model_name, config=config)
+        self.config = AutoConfig.from_pretrained(model_name)
+        self.config.num_labels = num_labels
+        self.plm = AutoModel.from_pretrained(model_name, config=self.config)
         self.dropout_rate = dropout_rate
         self.num_labels = num_labels
-        config.num_labels = num_labels
 
         # add special tokens
         self.special_tokens_dict = special_tokens_dict
         self.plm.resize_token_embeddings(len(self.tokenizer))
 
-        self.cls_fc_layer = FCLayer(config.hidden_size, config.hidden_size, self.dropout_rate)
-        self.entity_fc_layer = FCLayer(config.hidden_size, config.hidden_size, self.dropout_rate)
+        self.cls_fc_layer = FCLayer(self.config.hidden_size, self.config.hidden_size, self.dropout_rate)
+        self.entity_fc_layer = FCLayer(self.config.hidden_size, self.config.hidden_size, self.dropout_rate)
         self.label_classifier = FCLayer(
-            config.hidden_size * 3,
+            self.config.hidden_size * 3,
             self.num_labels,
             self.dropout_rate,
             use_activation=False,
@@ -80,7 +80,7 @@ class RBERT(nn.Module):
         """
         e_mask_unsqueeze = e_mask.unsqueeze(1)  # [b, 1, j-i+1]
         length_tensor = (e_mask != 0).sum(dim=1).unsqueeze(1)  # [batch_size, 1]
-
+        
         # [b, 1, j-i+1] * [b, j-i+1, dim] = [b, 1, dim] -> [b, dim]
         sum_vector = torch.bmm(e_mask_unsqueeze.float(), hidden_output).squeeze(1)
         avg_vector = sum_vector.float() / (length_tensor.float() + 1e-6)  # broadcasting
