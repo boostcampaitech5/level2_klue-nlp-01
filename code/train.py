@@ -187,7 +187,7 @@ def custom_train(config, device):
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     # entity special token를 tokenizer에 추가
-    special_token_list = []
+    special_token_list = ['@', '#'] if config.tokenizer.entity_marker_type not in ["entity_marker", "entity_mask", "typed_entity_marker"] else []
     with open("custom/entity_special_token.txt", "r", encoding="UTF-8") as f:
         for token in f:
             special_token_list.append(token.split("\n")[0])
@@ -195,7 +195,7 @@ def custom_train(config, device):
     tokenizer.add_special_tokens({"additional_special_tokens": list(set(special_token_list))})
 
     # make dataset for pytorch.
-    train_dataset, val_dataset = my_load_train_dataset(config['path'], tokenizer, config, NUM_LABELS)
+    train_dataset, val_dataset = my_load_train_dataset(config['path'], tokenizer, config)
 
     # setting model hyperparameter
     model_config = AutoConfig.from_pretrained(model_name)
@@ -233,6 +233,7 @@ def custom_train(config, device):
         eval_dataset=val_dataset,
         compute_metrics=compute_metrics,
         loss_type=loss_config.loss_type,
+        focal_loss_gamma=loss_config.gamma,
         device=device,
         callbacks=[
             EarlyStoppingCallback(early_stopping_patience=train_config.early_stopping_patience)
