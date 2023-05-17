@@ -45,6 +45,14 @@ def load_train_dataset(model_name, path, config):
     # DataFrame로 데이터셋 읽기
     train_dataset, val_dataset = load_split_data(path, config.folder_dir)
 
+    ## 3라벨 데이터 단순 증가
+    label_list = ['per:place_of_residence', 'per:product', 'per:other_family']
+    new_rows = train_dataset[train_dataset['label'].isin(label_list)].copy()
+    train_dataset = train_dataset.append(new_rows, ignore_index=True)
+    # shuffle
+    # train_dataset = train_dataset.sample(frac=1)
+    # train_dataset = train_dataset.sample(frac=1).reset_index(drop=True)
+    
     # 데이터셋의 label을 불러옴
     train_label = label_to_num(train_dataset["label"].values)
     val_label = label_to_num(val_dataset["label"].values)
@@ -121,11 +129,12 @@ def preprocessing_dataset(dataset):
         object_entity.append(obj_word)
         sentences.append(sentence)
 
-    #breakpoint()
     out_dataset = pd.DataFrame({'id': dataset['id'], 'sentence': sentences,
                                'subject_entity': subject_entity, 'object_entity': object_entity, 'label': dataset['label'], })
     
+
     # 전처리 -> 성능향상이 확실한, UNK로 표시되는 특수문자만 변경
+    # 나머지 필요한 것들을 주석 제거하고 사용해 주세요
     sentence = out_dataset['sentence'].values
 
     for i in range(len(sentence)):
@@ -138,8 +147,8 @@ def preprocessing_dataset(dataset):
         # sentence[i] = re.sub('[（「]', '(', sentence[i])
         # sentence[i] = re.sub('[）」]', ')', sentence[i])
         sentence[i] = re.sub('[？]', '?', sentence[i])
-        sentence[i] = re.sub('[»]', '<', sentence[i])
-        sentence[i] = re.sub('[«]', '>', sentence[i])
+        sentence[i] = re.sub('[»]', '>', sentence[i])
+        sentence[i] = re.sub('[«]', '<', sentence[i])
         # sentence[i] = re.sub('[»《〈]', '<', sentence[i])
         # sentence[i] = re.sub('[«》〉]', '>', sentence[i])
         # sentence[i] = re.sub('[‘’]', '\'', sentence[i])
