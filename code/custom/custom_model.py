@@ -107,3 +107,14 @@ class RBERT(nn.Module):
         logits = self.label_classifier(concat_h)
         
         return logits
+
+    def save_pretrained(self, save_directory):
+        if not os.path.exists(save_directory):
+            os.makedirs(save_directory)
+            
+        # model 저장
+        torch.save(self.state_dict(), os.path.join(save_directory, "pytorch_model.bin"))
+        
+        # config 저장
+        with open(os.path.join(save_directory, "config.json"), "w") as f:
+            json.dump(self.config.to_dict(), f)
