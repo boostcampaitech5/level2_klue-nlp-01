@@ -12,6 +12,7 @@ from transformers import (
     EarlyStoppingCallback,
     AutoModelForSequenceClassification,
     AutoTokenizer,
+    TrainerCallback,
 )
 from load_data import load_train_dataset
 
