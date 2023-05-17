@@ -32,6 +32,7 @@ class RE_Dataset(torch.utils.data.Dataset):
         item['labels'] = torch.tensor(self.labels[idx])
         item['subject_mask'] = subject_entity_mask
         item['object_mask'] = object_entity_mask
+        
         return item
 
     def __len__(self):
@@ -168,9 +169,9 @@ def preprocessing_dataset(dataset):
 
         subject_entity.append(sbj_word)
         object_entity.append(obj_word)
+        sentences.append(sentence)
         subject_entity_token.append(f"<S:{sbj_type}>" + sbj_word + f"</S:{sbj_type}>")
         object_entity_token.append(f"<O:{obj_type}>" + obj_word + f"</O:{obj_type}>")
-        sentences.append(sentence)
         
     out_dataset = pd.DataFrame({'id': dataset['id'], 'sentence': sentences,
                                'subject_entity': subject_entity, 'object_entity': object_entity,
