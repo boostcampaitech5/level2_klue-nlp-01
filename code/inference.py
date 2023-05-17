@@ -11,7 +11,8 @@ import pickle as pickle
 import numpy as np
 from tqdm import tqdm
 # from load_data import num_to_label, load_test_dataset
-from custom.custom_dataset import num_to_label, load_test_dataset
+from custom.custom_dataset import num_to_label, my_load_test_dataset, RE_Dataset
+from custom.custom_model import RBERT
 
 def test(model, tokenized_sent, device, config):
     """
