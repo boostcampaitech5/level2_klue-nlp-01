@@ -204,6 +204,6 @@ def custom_train(config, device):
 
     # train model
     trainer.train()
-    model.save_pretrained(config.folder_dir + CONFIG.OUTPUT_PATH)
+    trainer.save_pretrained(config.folder_dir + CONFIG.OUTPUT_PATH)
     shutil.copyfile(CONFIG.CONFIG_PATH, os.path.join(config.folder_dir, CONFIG.CONFIG_NAME))
     

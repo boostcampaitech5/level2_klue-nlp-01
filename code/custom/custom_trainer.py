@@ -4,6 +4,8 @@ import numpy as np
 import torch.nn as nn
 from torch.nn import functional as F
 from utils.config import load_config
+import os
+import json
 
 from transformers.file_utils import is_sagemaker_mp_enabled
 from transformers.trainer_pt_utils import nested_detach
@@ -130,3 +132,10 @@ class CustomTrainer(Trainer):
         if len(logits) == 1:
             logits = logits[0]
         return (loss, logits, labels)
+    
+    def save_pretrained(self, save_directory):
+        os.makedirs(save_directory, exist_ok=True)
+        
+        torch.save(self.model.state_dict(),os.path.join(save_directory, "pytorch_model.bin"))
+        with open(os.path.join(save_directory, "config.json"), "w") as f:
+            json.dump(self.model.config.to_dict(), f)
