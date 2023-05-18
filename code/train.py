@@ -16,7 +16,7 @@ from transformers import (
 from load_data import load_train_dataset
 from utils.meta_data import MINOR_LABEL_IDS, REF_SENT, LABEL_TO_ID
 
-from custom.custom_model import CustomModel, RBERT
+from custom.custom_model import CustomModel, RBERT, MCAM
 from custom.custom_trainer import CustomTrainer
 from custom.custom_dataset import my_load_train_dataset, get_ref_inputids
 from constants import CONFIG
@@ -187,10 +187,10 @@ def custom_train(config, device):
     model_name = config.model_name
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-    # ref_labels_id = MINOR_LABEL_IDS[:4]
-    # ref_labels_id = sorted(ref_labels_id)
-    # ref_sent = [REF_SENT[i] for i in ref_labels_id]
-    # ref_input_ids, ref_mask = get_ref_inputids(tokenizer=tokenizer, ref_sent=ref_sent)
+    ref_labels_id = MINOR_LABEL_IDS[:4]
+    ref_labels_id = sorted(ref_labels_id)
+    ref_sent = [REF_SENT[i] for i in ref_labels_id]
+    ref_input_ids, ref_mask = get_ref_inputids(tokenizer=tokenizer, ref_sent=ref_sent)
 
     # make dataset for pytorch.
     train_dataset, val_dataset, class_num_list = load_train_dataset(
@@ -208,7 +208,8 @@ def custom_train(config, device):
     # make dataset for pytorch.
     train_dataset, val_dataset = my_load_train_dataset(config['path'], tokenizer, config)
 
-    model = RBERT(model_name = config.model_name, special_tokens_dict=special_token_list, tokenizer = tokenizer)
+    # model = RBERT(model_name = config.model_name, special_tokens_dict=special_token_list, tokenizer = tokenizer)
+    model = MCAM(ref_labels_id, ref_mask, 30, PRE_TRAINED_MODEL_NAME=model_name)
     # setting model hyperparameter
     # model = CustomModel(model_config=model_config, model_name=model_name)
     # model = AutoModelForSequenceClassification.from_pretrained(model_name, config=model_config)
