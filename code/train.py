@@ -16,7 +16,7 @@ from transformers import (
 from load_data import load_train_dataset
 from utils.meta_data import MINOR_LABEL_IDS, REF_SENT, LABEL_TO_ID
 
-from custom.custom_model import CustomModel
+from custom.custom_model import CustomModel, RBERT
 from custom.custom_trainer import CustomTrainer
 from custom.custom_dataset import my_load_train_dataset, get_ref_inputids
 from constants import CONFIG
@@ -198,21 +198,21 @@ def custom_train(config, device):
     )
 
     # entity special token를 tokenizer에 추가
-    special_token_list = []
+    special_token_list = ['@', '#'] if config.tokenizer.entity_marker_type not in ["entity_marker", "entity_mask", "typed_entity_marker"] else []
     with open("custom/entity_special_token.txt", "r", encoding="UTF-8") as f:
         for token in f:
             special_token_list.append(token.split("\n")[0])
 
     tokenizer.add_special_tokens({"additional_special_tokens": list(set(special_token_list))})
 
-    # setting model hyperparameter
-    model_config = AutoConfig.from_pretrained(model_name)
-    model_config.num_labels = CONFIG.NUM_LABELS
+    # make dataset for pytorch.
+    train_dataset, val_dataset = my_load_train_dataset(config['path'], tokenizer, config)
 
-    # model = RE_Model(config=model_config, n_class=30, ref_input_ids=ref_input_ids, ref_mask=ref_mask, hidden_size=768, PRE_TRAINED_MODEL_NAME=model_name)
-    model = CustomModel(model_name, config=model_config)
+    model = RBERT(model_name = config.model_name, special_tokens_dict=special_token_list, tokenizer = tokenizer)
+    # setting model hyperparameter
+    # model = CustomModel(model_config=model_config, model_name=model_name)
+    # model = AutoModelForSequenceClassification.from_pretrained(model_name, config=model_config)
     # model.resize_token_embeddings(len(tokenizer))
-    model.init_weights()
     model.to(device)
 
     training_args = TrainingArguments(
@@ -243,11 +243,8 @@ def custom_train(config, device):
         eval_dataset=val_dataset,
         compute_metrics=compute_metrics,
         loss_type=loss_config.loss_type,
-        focal_loss_gamma=loss_config.gamma,
-        class_num_list=class_num_list,
-        max_m=loss_config.max_m,
-        weight=loss_config.weight,
-        s=loss_config.s,
+        alpha=loss_config.alpha,
+        gamma=loss_config.gamma,
         device=device,
         callbacks=[
             EarlyStoppingCallback(early_stopping_patience=train_config.early_stopping_patience)
@@ -258,6 +255,6 @@ def custom_train(config, device):
 
     # train model
     trainer.train()
-    model.save_pretrained(config.folder_dir + CONFIG.OUTPUT_PATH)
-    # torch.save(model, config.folder_dir + "/pytorch_model.pt")
+    trainer.save_pretrained(config.folder_dir + CONFIG.OUTPUT_PATH)
     shutil.copyfile(CONFIG.CONFIG_PATH, os.path.join(config.folder_dir, CONFIG.CONFIG_NAME))
+    
