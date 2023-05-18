@@ -4,3 +4,5 @@ transformers==4.10.0
 omegaconf==2.3.0
 wandb==0.15.1 --use-feature=2020-resolver
 black==23.3.0
+matplotlib==3.7.1
+seaborn==0.12.2
