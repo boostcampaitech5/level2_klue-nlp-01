@@ -98,6 +98,8 @@ class CustomTrainer(Trainer):
         loss_type=None,
         focal_loss_gamma=2.0,
         class_num_list=None,
+        alpha,
+        gamma,
         max_m=0.5,
         weight=None,
         s=30,
@@ -119,7 +121,7 @@ class CustomTrainer(Trainer):
 
     def compute_loss(self, model, inputs, return_outputs=False):
         """기존 loss를 커스텀loss로 변경합니다. (None:CE loss)"""
-        labels = inputs.get("labels")
+        labels = inputs["labels"]
         
         inputs = {
             "input_ids": inputs["input_ids"].to(self.device),
@@ -127,18 +129,17 @@ class CustomTrainer(Trainer):
             "subject_mask": inputs["subject_mask"].to(self.device),
             # 'token_type_ids' # NOT FOR ROBERTA!
             "object_mask": inputs["object_mask"].to(self.device),
-            "label": labels,
+            "label": labels.to(self.device),
         }
         
         outputs = model(**inputs)
-        logits = outputs.get("logits")
 
         if self.loss_type == "ldam":
             self.loss.weight = self.class_weights.get_weights(
                 self.state.epoch, self.args.num_train_epochs
             )
 
-        loss = self.loss(logits, labels)
+        loss = self.loss(outputs, labels)
         return (loss, outputs) if return_outputs else loss
     
     def prediction_step(self,model,inputs,prediction_loss_only,ignore_keys = None,):
