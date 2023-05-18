@@ -139,7 +139,7 @@ def train(config=None):
     model_config.num_labels = NUM_LABELS
     model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
     model.resize_token_embeddings(len(tokenizer))
-    model.config.attention_dropout_prob = config['early_attention_probs_dropout_prob']
+    model.config.attention_probs_dropout_prob = config['early_attention_probs_dropout_prob']
     model.config.hidden_dropout_prob = config['early_hidden_dropout_prob']
     model.to(device)
 
