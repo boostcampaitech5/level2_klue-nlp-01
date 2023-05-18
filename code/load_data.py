@@ -45,6 +45,11 @@ def load_train_dataset(model_name, path, config):
     # DataFrame로 데이터셋 읽기
     train_dataset, val_dataset = load_split_data(path, config.folder_dir)
 
+    ## 3라벨 데이터 단순 증가
+    # label_list = ['per:place_of_residence', 'per:product', 'per:other_family']
+    # new_rows = train_dataset[train_dataset['label'].isin(label_list)].copy()
+    # train_dataset = train_dataset.append(new_rows, ignore_index=True)
+    
     # 데이터셋의 label을 불러옴
     train_label = label_to_num(train_dataset["label"].values)
     val_label = label_to_num(val_dataset["label"].values)
@@ -121,42 +126,20 @@ def preprocessing_dataset(dataset):
         object_entity.append(obj_word)
         sentences.append(sentence)
 
-    #breakpoint()
     out_dataset = pd.DataFrame({'id': dataset['id'], 'sentence': sentences,
                                'subject_entity': subject_entity, 'object_entity': object_entity, 'label': dataset['label'], })
     
+
     # 전처리 -> 성능향상이 확실한, UNK로 표시되는 특수문자만 변경
     sentence = out_dataset['sentence'].values
 
     for i in range(len(sentence)):
-        ## 문자 변경
-        # sentence[i] = re.sub('[\u4E00-\u9FFF\uF900-\uFAFF\U00020000-\U0002FFFF]+', '[한자]', sentence[i])
-        # sentence[i] = re.sub('[\u4e00-\u9fff\u30a0-\u30ff\u3040-\u309f]+', '[일본어]', sentence[i])
-        # sentence[i] = re.sub('[\u0370-\u03FF&&[^A-Za-z]]+', '[그리스어]', sentence[i])
         sentence[i] = re.sub('[–]', '-', sentence[i])
         sentence[i] = re.sub('[∼～]', '~', sentence[i])
-        # sentence[i] = re.sub('[（「]', '(', sentence[i])
-        # sentence[i] = re.sub('[）」]', ')', sentence[i])
         sentence[i] = re.sub('[？]', '?', sentence[i])
-        sentence[i] = re.sub('[»]', '<', sentence[i])
-        sentence[i] = re.sub('[«]', '>', sentence[i])
-        # sentence[i] = re.sub('[»《〈]', '<', sentence[i])
-        # sentence[i] = re.sub('[«》〉]', '>', sentence[i])
-        # sentence[i] = re.sub('[‘’]', '\'', sentence[i])
-        # sentence[i] = re.sub('[“”]', '\"', sentence[i])
-        # sentence[i] = re.sub('\(주\)', '㈜', sentence[i])
+        sentence[i] = re.sub('[»]', '>', sentence[i])
+        sentence[i] = re.sub('[«]', '<', sentence[i])
         sentence[i] = re.sub('€', 'e', sentence[i])
-        
-        ## 특수문자, 한글, 영어 제외한 문자 제거
-        # sentence[i] = re.sub('[^\uAC00-\uD7AF\u1100-\u11FFa-zA-Z0-9{P}\s\(\)\,\~\.\:\"\'\-\·\[\]\/\;\!\?\|\&\*\★\<\>\（\「\）\」\《\〈\‘\’\“\”]+', '[문자]', sentence[i])
-        
-        ## 문자 제거 후 작업
-        # sentence[i] = re.sub('[(][\s\/\~]*[,]*[\s\/\~]*[)]', '', sentence[i]) # (,) 제거
-        # sentence[i] = re.sub('[(][\s]*[\,\.\:\!\;\/]+[\s]*', '(', sentence[i])
-        # sentence[i] = re.sub('[(][\s]*[\,\.\:\!\;\/]+[\s]*', '(', sentence[i])
-        # sentence[i] = re.sub('[(][\s]+', '(', sentence[i]) # 공백제거
-        # sentence[i] = re.sub('[\s]+[)]', ')', sentence[i]) # 공백제거
-        # sentence[i] = re.sub('[\s]{2,}', ' ', sentence[i]) # 띄어쓰기 2번 이상 제거
         
     out_dataset['sentence'].update(sentence)
 
@@ -190,7 +173,7 @@ def split_data(dataset_dir, save_path):
 
     # train과 valid 데이터로 split 하기
     dataset_label = label_to_num(pd_dataset["label"].values)
-    split_indices = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
+    split_indices = StratifiedShuffleSplit(n_splits=1, test_size=0.02, random_state=42)
 
     train_indices, val_indices = next(split_indices.split(pd_dataset, dataset_label))
 
