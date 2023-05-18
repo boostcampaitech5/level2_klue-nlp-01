@@ -1,14 +1,15 @@
 import torch
 from torch import nn
-from transformers import AutoModelForSequenceClassification, RobertaModel, PreTrainedModel, AutoTokenizer, RobertaForSequenceClassification, RobertaPreTrainedModel
+from transformers import AutoModel, AutoConfig, AutoTokenizer
+from transformers import AutoModelForSequenceClassification, RobertaModel, PreTrainedModel, RobertaForSequenceClassification, RobertaPreTrainedModel
 
-class RE_Model(PreTrainedModel):
+class MCAM(nn.Module):
     """새로운 레이어를 추가하거나, loss fucntion을 수정하는 등, 모델을 커스텀 하기 위한 클래스입니다.
     
        pretrain된 모델을 불러올때, 모델마다 무엇을 input해야 하는지 다를 수 있기 때문에, 주의 하셔야 합니다.
     """    
-    def __init__(self, config, ref_input_ids: torch.tensor, ref_mask: torch.tensor,  n_class=25, hidden_size=768, PRE_TRAINED_MODEL_NAME = 'bert-base-uncased'):
-        super().__init__(config)
+    def __init__(self, ref_input_ids: torch.tensor, ref_mask: torch.tensor,  n_class=25, hidden_size=768, PRE_TRAINED_MODEL_NAME = 'bert-base-uncased'):
+        super().__init__()
         self.batch_n = 0
         self.hidden_size = hidden_size
         self.ref_input_ids = ref_input_ids
@@ -22,7 +23,7 @@ class RE_Model(PreTrainedModel):
 
         self.out = nn.Linear(in_features=self.hidden_size, out_features=n_class)
 
-    def forward(self, input_ids, attention_mask, sub_idx, obj_idx, attn_guide, device):
+    def forward(self, input_ids, attention_mask, device, sub_idx=None, obj_idx=None, attn_guide=None):
         """
         - E1: encoder(input_ids) -> rep.    
         - E2: encoder(reference_sent_ids) -> rep.
