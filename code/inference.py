@@ -136,30 +136,30 @@ def custom_inference(config, device):
     if not os.path.exists(CONFIG.PREDICTTION_PATH):
         os.makedirs(CONFIG.PREDICTTION_PATH)
     
-    ####################################### dev #######################################
-    # dev 데이터로 결과 눈으로 확인해보기
-    dev_data, dev_dataset, dev_label = my_load_test_dataset(config.path.val_path, tokenizer, config, NUM_LABELS)
-    dev_dataset = RE_Dataset(dev_dataset, dev_label)
-    pred_answer, output_prob = test(model, dev_dataset, device, config)  # model에서 class 추론
-    output = pd.DataFrame({'id': dev_data['id'], 'sentence' : dev_data['sentence'], 'label' : dev_label, 'pred_label': pred_answer, 'probs': output_prob, })
+    # ####################################### dev #######################################
+    # # dev 데이터로 결과 눈으로 확인해보기
+    # dev_data, dev_dataset, dev_label = my_load_test_dataset(config.path.val_path, tokenizer, config)
+    # dev_dataset = RE_Dataset(dev_dataset, dev_label)
+    # pred_answer, output_prob = test(model, dev_dataset, device, config)  # model에서 class 추론
+    # output = pd.DataFrame({'id': dev_data['id'], 'sentence' : dev_data['sentence'], 'label' : dev_label, 'pred_label': pred_answer, 'probs': output_prob, })
     
-    # prediction 저장 폴더 생성
-    if not os.path.exists(os.path.join(inference_config.output_dir, inference_dir)):
-        os.makedirs(os.path.join(inference_config.output_dir, inference_dir))
+    # # prediction 저장 폴더 생성
+    # if not os.path.exists(os.path.join(inference_config.output_dir, inference_dir)):
+    #     os.makedirs(os.path.join(inference_config.output_dir, inference_dir))
         
-    # 최종적으로 완성된 예측한 라벨 csv 파일 형태로 저장.
-    file_path = os.path.join(inference_config.output_dir, inference_dir, f"dev_{inference_config.output_file}")
-    output.to_csv(file_path, index=False)
+    # # 최종적으로 완성된 예측한 라벨 csv 파일 형태로 저장.
+    # file_path = os.path.join(inference_config.output_dir, inference_dir, f"dev_{inference_config.output_file}")
+    # output.to_csv(file_path, index=False)
     
     ####################################### Test #######################################
     # test 데이터셋 호출
     test_dataset_dir = config.path.test_path
-    test_data, test_dataset, test_label = my_load_test_dataset(test_dataset_dir, tokenizer, config, NUM_LABELS)
+    test_data, test_dataset, test_label = my_load_test_dataset(test_dataset_dir, tokenizer, config)
     Re_test_dataset = RE_Dataset(test_data, test_dataset, test_label, tokenizer)
 
     # 정답 예측
     pred_answer, output_prob = test(model, Re_test_dataset, device, config)  # model에서 class 추론
-    # pred_answer = num_to_label(pred_answer)  # 숫자로 된 class를 원래 문자열 라벨로 변환.
+    pred_answer = num_to_label(pred_answer)  # 숫자로 된 class를 원래 문자열 라벨로 변환.
 
     # 예측된 정답을 DataFrame으로 저장
     #########################################################
@@ -171,7 +171,7 @@ def custom_inference(config, device):
         os.makedirs(os.path.join(inference_config.output_dir, inference_dir))
         
     # 최종적으로 완성된 예측한 라벨 csv 파일 형태로 저장.
-    file_path = os.path.join(inference_config.output_dir, inference_dir, f"test_{inference_config.output_file}")
+    file_path = os.path.join(inference_config.output_dir, inference_dir, inference_config.output_file)
     output.to_csv(file_path, index=False)
     
     
