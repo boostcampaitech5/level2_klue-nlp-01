@@ -14,3 +14,8 @@ def load_config(args):
     config.inference_file = args.inference
 
     return config
+
+def load_config_temp():
+    config = OmegaConf.load(CONFIG.CONFIG_PATH)
+    
+    return config
