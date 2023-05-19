@@ -1,5 +1,5 @@
 seed: 42
-model_name: "klue/bert-base"
+model_name: "klue/roberta-base"
 batch_size: 64
 num_labels : 3
 
@@ -32,6 +32,7 @@ tokenizer:
   truncation: True
   max_length: 256
   add_special_tokens: True
+  entity_marker_type : "kor_typed_entity_marker_punct"
 
 inference:
   model_dir: "./best_model"
@@ -48,4 +49,5 @@ path:
   split_nopreprocess_val_path: "split_data/split_nopreprocess_val.csv"
   split_preprocess_train_path: "split_data/split_preprocess_train.csv"
   split_preprocess_val_path: "split_data/split_preprocess_val.csv"
+  augmented_path: "../dataset/augmented_dataset"
   
