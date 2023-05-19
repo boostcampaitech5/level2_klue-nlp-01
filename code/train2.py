@@ -4,6 +4,7 @@ import gc
 import wandb
 import shutil
 import numpy as np
+import random
 
 from transformers import (
     AutoConfig,
@@ -34,6 +35,10 @@ class DropoutCallback(TrainerCallback):
             print(f'dropout change to {self.config["late_hidden_dropout_prob"]}, {self.config["late_attention_probs_dropout_prob"]}')
             self.model.config.hidden_dropout_prob = self.config['late_hidden_dropout_prob']
             self.model.config.attention_probs_dropout_prob = self.config['late_attention_probs_dropout_prob']
+            for i in range(self.model.roberta.encoder.layer):
+                self.model.roberta.encoder.layer[i].output.dropout.p = self.config['late_hidden_dropout_prob']    
+                self.model.roberta.encoder.layer[i].attention.output.dropout.p = self.config['late_attention_probs_dropout_prob']
+
 
 
 def klue_re_micro_f1(preds, labels):
@@ -109,6 +114,7 @@ def compute_metrics(pred):
 
 
 def train(config=None):
+    config=wandb.config
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     # MODEL_NAME = "klue/roberta-large"
@@ -125,29 +131,36 @@ def train(config=None):
 
     # model_name 및 tokenizer 호출
     model_name = base_config.model_name
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, cache_dir=None)
 
     # entity special token를 tokenizer에 추가
     special_token_list = []
     with open("custom/entity_special_token.txt", "r", encoding="UTF-8") as f:
         for token in f:
             special_token_list.append(token.split("\n")[0])
-
+            
     tokenizer.add_special_tokens({"additional_special_tokens": list(set(special_token_list))})
 
-    model_config = AutoConfig.from_pretrained(MODEL_NAME)
-    model_config.num_labels = NUM_LABELS
-    model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
+    model_config = AutoConfig.from_pretrained(MODEL_NAME, cache_dir=None)
+    model_config.num_labels = 30
+    model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config, cache_dir=None)
     model.resize_token_embeddings(len(tokenizer))
+    # model.config.attention_probs_dropout_prob = 0.3
+    # model.config.hidden_dropout_prob = 0.3
     model.config.attention_probs_dropout_prob = config['early_attention_probs_dropout_prob']
     model.config.hidden_dropout_prob = config['early_hidden_dropout_prob']
+    for i in range(len(model.roberta.encoder.layer)):
+        model.roberta.encoder.layer[i].output.dropout.p = config['early_attention_probs_dropout_prob']    
+        model.roberta.encoder.layer[i].attention.output.dropout.p = config['early_hidden_dropout_prob']
+    # print(config)
+    # print(model.config)
     model.to(device)
 
     # make dataset for pytorch.
     train_dataset, val_dataset, class_num_list = load_train_dataset(
         model_name, base_config["path"], base_config
     )
-
+    
     # breakpoint()
     training_args = TrainingArguments(
         report_to=CONFIG.WANDB,
@@ -185,14 +198,14 @@ def train(config=None):
         device=device,
         callbacks=[EarlyStoppingCallback(
             early_stopping_patience=train_config.early_stopping_patience)
-            ,DropoutCallback(model, config)
+            # ,DropoutCallback(model, config)
             ]
     )
-    # breakpoint()
+    
     # train model
     trainer.train()
-    model.save_pretrained(base_config.folder_dir + CONFIG.OUTPUT_PATH)
-    shutil.copyfile(CONFIG.CONFIG_PATH, os.path.join(base_config.folder_dir, CONFIG.CONFIG_NAME))
+    # model.save_pretrained(base_config.folder_dir + CONFIG.OUTPUT_PATH)
+    # shutil.copyfile(CONFIG.CONFIG_PATH, os.path.join(base_config.folder_dir, CONFIG.CONFIG_NAME))
     return trainer
 
 
@@ -205,15 +218,16 @@ def objective(config):
 
 def main():
     wandb.init()
+    # train(wandb.config)
     score = objective(wandb.config)
     wandb.log({"eval_micro f1 score": score})
 
 
 sweep_config = {
-    "name": "wandb-sweep",
-    "method": "bayes",
+    # "name": "wandb-sweep",
+    "method": "random",
     "metric": {
-        "name": "eval_micro f1 score",
+        "name": "eval/micro f1 score",
         "goal": "maximize",
     },
     "parameters": {
@@ -221,11 +235,18 @@ sweep_config = {
         "early_attention_probs_dropout_prob": {"distribution": "uniform", "min": 0.0, "max": 0.7},
         "late_dropout_epoch": {"values":[1, 2, 3]},
         "late_hidden_dropout_prob": {"distribution": "uniform", "min": 0.0, "max": 0.7},
-        "late_attention_probs_dropout_prob": {"distribution": "uniform", "min": 0.0, "max": 0.7},
+        "late_attention_probs_dropout_prob": {"distribution": "uniform", "min": 0.0, "max": 0.7}
     },
 }
 
+# torch, np 설정
+SEED = 42
+random.seed(SEED)
+np.random.seed(SEED)
+torch.manual_seed(SEED)
+if torch.cuda.is_available():
+    torch.cuda.manual_seed_all(SEED)
 
-if __name__ == "__main__":
-    sweep_id = wandb.sweep(sweep_config, project="dropout")
-    wandb.agent(sweep_id, function=main, count=30)
+sweep_id = wandb.sweep(sweep_config, project="dropout")
+wandb.agent(sweep_id, function=main, count=50)
+wandb.finish()
