@@ -49,5 +49,5 @@ path:
   split_nopreprocess_val_path: "split_data/split_nopreprocess_val.csv"
   split_preprocess_train_path: "split_data/split_preprocess_train.csv"
   split_preprocess_val_path: "split_data/split_preprocess_val.csv"
-  augmented_path: "../dataset/augmented_dataset"
+  augmented_path: "./dataset/augmented_dataset"
   
