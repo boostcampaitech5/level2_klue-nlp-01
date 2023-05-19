@@ -1,11 +1,14 @@
 import pandas as pd
 import random
 import os
+from omegaconf import OmegaConf
+from code.constants import CONFIG
 
 from tqdm import tqdm
 
+config = OmegaConf.load(os.path.join("code", "config", CONFIG.CONFIG_NAME))
 # train.csv 파일 읽어오기
-reference_dataset = pd.read_csv("/opt/ml/level2_klue-nlp-01/dataset/dataset v.1.0/train.csv")
+reference_dataset = pd.read_csv(config.path.train_path[1:])
 
 # 증강결과 저장용 데이터프레임 생성
 augmented_dataset = pd.DataFrame(columns=reference_dataset.columns)
@@ -225,10 +228,10 @@ max_id_number = reference_dataset["id"].max() + 1
 augmented_dataset["id"] = range(max_id_number, max_id_number + len(augmented_dataset))
 
 # 생성된 데이터셋 저장 경로 설정
-save_dir = "/opt/ml/level2_klue-nlp-01/dataset/augmented_dataset"
+save_dir = config.path.augmented_path
 if not os.path.exists(save_dir):
     os.makedirs(save_dir)
 
 # 최종적으로 만들어진 데이터셋 저장
 final_dataset = reference_dataset.append(augmented_dataset, ignore_index=True)
-final_dataset.to_csv(os.path.join(save_dir, "augmented_train______.csv"), index=False)
+final_dataset.to_csv(os.path.join(save_dir, "augmented_train.csv"), index=False)
